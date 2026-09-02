@@ -1,0 +1,132 @@
+C:\Users\aluno\source\repos\RedeSocialEventosAdmin\RedeSocialEventosAdmin\obj\Debug\net8.0-windows\RedeSocialEventosAdmin.csproj.AssemblyReference.cache
+C:\Users\aluno\source\repos\RedeSocialEventosAdmin\RedeSocialEventosAdmin\obj\Debug\net8.0-windows\RedeSocialEventosAdmin.Form1.resources
+C:\Users\aluno\source\repos\RedeSocialEventosAdmin\RedeSocialEventosAdmin\obj\Debug\net8.0-windows\RedeSocialEventosAdmin.Forms.FrmDashboard.resources
+C:\Users\aluno\source\repos\RedeSocialEventosAdmin\RedeSocialEventosAdmin\obj\Debug\net8.0-windows\RedeSocialEventosAdmin.Forms.FrmLogin.resources
+C:\Users\aluno\source\repos\RedeSocialEventosAdmin\RedeSocialEventosAdmin\obj\Debug\net8.0-windows\RedeSocialEventosAdmin.Forms.FrmPerfil.resources
+C:\Users\aluno\source\repos\RedeSocialEventosAdmin\RedeSocialEventosAdmin\obj\Debug\net8.0-windows\RedeSocialEventosAdmin.Forms.FrmPrincipal.resources
+C:\Users\aluno\source\repos\RedeSocialEventosAdmin\RedeSocialEventosAdmin\obj\Debug\net8.0-windows\RedeSocialEventosAdmin.Forms.FrmRelatorios.resources
+C:\Users\aluno\source\repos\RedeSocialEventosAdmin\RedeSocialEventosAdmin\obj\Debug\net8.0-windows\RedeSocialEventosAdmin.Forms.FrmUsuarioMockCadastro.resources
+C:\Users\aluno\source\repos\RedeSocialEventosAdmin\RedeSocialEventosAdmin\obj\Debug\net8.0-windows\RedeSocialEventosAdmin.Forms.FrmUsuarios.resources
+C:\Users\aluno\source\repos\RedeSocialEventosAdmin\RedeSocialEventosAdmin\obj\Debug\net8.0-windows\RedeSocialEventosAdmin.csproj.GenerateResource.cache
+C:\Users\aluno\source\repos\RedeSocialEventosAdmin\RedeSocialEventosAdmin\obj\Debug\net8.0-windows\RedeSocialEventosAdmin.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\aluno\source\repos\RedeSocialEventosAdmin\RedeSocialEventosAdmin\obj\Debug\net8.0-windows\RedeSocialEventosAdmin.AssemblyInfoInputs.cache
+C:\Users\aluno\source\repos\RedeSocialEventosAdmin\RedeSocialEventosAdmin\obj\Debug\net8.0-windows\RedeSocialEventosAdmin.AssemblyInfo.cs
+C:\Users\aluno\source\repos\RedeSocialEventosAdmin\RedeSocialEventosAdmin\obj\Debug\net8.0-windows\RedeSocialEventosAdmin.csproj.CoreCompileInputs.cache
+C:\Users\aluno\source\repos\RedeSocialEventosAdmin\RedeSocialEventosAdmin\bin\Debug\net8.0-windows\RedeSocialEventosAdmin.exe
+C:\Users\aluno\source\repos\RedeSocialEventosAdmin\RedeSocialEventosAdmin\bin\Debug\net8.0-windows\RedeSocialEventosAdmin.deps.json
+C:\Users\aluno\source\repos\RedeSocialEventosAdmin\RedeSocialEventosAdmin\bin\Debug\net8.0-windows\RedeSocialEventosAdmin.runtimeconfig.json
+C:\Users\aluno\source\repos\RedeSocialEventosAdmin\RedeSocialEventosAdmin\bin\Debug\net8.0-windows\RedeSocialEventosAdmin.dll
+C:\Users\aluno\source\repos\RedeSocialEventosAdmin\RedeSocialEventosAdmin\bin\Debug\net8.0-windows\RedeSocialEventosAdmin.pdb
+C:\Users\aluno\source\repos\RedeSocialEventosAdmin\RedeSocialEventosAdmin\bin\Debug\net8.0-windows\BouncyCastle.Cryptography.dll
+C:\Users\aluno\source\repos\RedeSocialEventosAdmin\RedeSocialEventosAdmin\bin\Debug\net8.0-windows\FontAwesome.Sharp.dll
+C:\Users\aluno\source\repos\RedeSocialEventosAdmin\RedeSocialEventosAdmin\bin\Debug\net8.0-windows\Google.Protobuf.dll
+C:\Users\aluno\source\repos\RedeSocialEventosAdmin\RedeSocialEventosAdmin\bin\Debug\net8.0-windows\Guna.UI2.dll
+C:\Users\aluno\source\repos\RedeSocialEventosAdmin\RedeSocialEventosAdmin\bin\Debug\net8.0-windows\K4os.Compression.LZ4.dll
+C:\Users\aluno\source\repos\RedeSocialEventosAdmin\RedeSocialEventosAdmin\bin\Debug\net8.0-windows\K4os.Compression.LZ4.Streams.dll
+C:\Users\aluno\source\repos\RedeSocialEventosAdmin\RedeSocialEventosAdmin\bin\Debug\net8.0-windows\K4os.Hash.xxHash.dll
+C:\Users\aluno\source\repos\RedeSocialEventosAdmin\RedeSocialEventosAdmin\bin\Debug\net8.0-windows\MySql.Data.dll
+C:\Users\aluno\source\repos\RedeSocialEventosAdmin\RedeSocialEventosAdmin\bin\Debug\net8.0-windows\System.IO.Pipelines.dll
+C:\Users\aluno\source\repos\RedeSocialEventosAdmin\RedeSocialEventosAdmin\bin\Debug\net8.0-windows\System.Management.dll
+C:\Users\aluno\source\repos\RedeSocialEventosAdmin\RedeSocialEventosAdmin\bin\Debug\net8.0-windows\ZstdSharp.dll
+C:\Users\aluno\source\repos\RedeSocialEventosAdmin\RedeSocialEventosAdmin\bin\Debug\net8.0-windows\runtimes\win-x64\native\comerr64.dll
+C:\Users\aluno\source\repos\RedeSocialEventosAdmin\RedeSocialEventosAdmin\bin\Debug\net8.0-windows\runtimes\win-x64\native\gssapi64.dll
+C:\Users\aluno\source\repos\RedeSocialEventosAdmin\RedeSocialEventosAdmin\bin\Debug\net8.0-windows\runtimes\win-x64\native\k5sprt64.dll
+C:\Users\aluno\source\repos\RedeSocialEventosAdmin\RedeSocialEventosAdmin\bin\Debug\net8.0-windows\runtimes\win-x64\native\krb5_64.dll
+C:\Users\aluno\source\repos\RedeSocialEventosAdmin\RedeSocialEventosAdmin\bin\Debug\net8.0-windows\runtimes\win-x64\native\krbcc64.dll
+C:\Users\aluno\source\repos\RedeSocialEventosAdmin\RedeSocialEventosAdmin\bin\Debug\net8.0-windows\runtimes\win\lib\net7.0\System.Management.dll
+C:\Users\aluno\source\repos\RedeSocialEventosAdmin\RedeSocialEventosAdmin\obj\Debug\net8.0-windows\RedeSoci.008CB345.Up2Date
+C:\Users\aluno\source\repos\RedeSocialEventosAdmin\RedeSocialEventosAdmin\obj\Debug\net8.0-windows\RedeSocialEventosAdmin.dll
+C:\Users\aluno\source\repos\RedeSocialEventosAdmin\RedeSocialEventosAdmin\obj\Debug\net8.0-windows\refint\RedeSocialEventosAdmin.dll
+C:\Users\aluno\source\repos\RedeSocialEventosAdmin\RedeSocialEventosAdmin\obj\Debug\net8.0-windows\RedeSocialEventosAdmin.pdb
+C:\Users\aluno\source\repos\RedeSocialEventosAdmin\RedeSocialEventosAdmin\obj\Debug\net8.0-windows\RedeSocialEventosAdmin.genruntimeconfig.cache
+C:\Users\aluno\source\repos\RedeSocialEventosAdmin\RedeSocialEventosAdmin\obj\Debug\net8.0-windows\ref\RedeSocialEventosAdmin.dll
+C:\Users\acloc\Downloads\RedeSocialEventosAdmin\RedeSocialEventosAdmin\RedeSocialEventosAdmin\bin\Debug\net8.0-windows\RedeSocialEventosAdmin.exe
+C:\Users\acloc\Downloads\RedeSocialEventosAdmin\RedeSocialEventosAdmin\RedeSocialEventosAdmin\bin\Debug\net8.0-windows\RedeSocialEventosAdmin.deps.json
+C:\Users\acloc\Downloads\RedeSocialEventosAdmin\RedeSocialEventosAdmin\RedeSocialEventosAdmin\bin\Debug\net8.0-windows\RedeSocialEventosAdmin.runtimeconfig.json
+C:\Users\acloc\Downloads\RedeSocialEventosAdmin\RedeSocialEventosAdmin\RedeSocialEventosAdmin\bin\Debug\net8.0-windows\RedeSocialEventosAdmin.dll
+C:\Users\acloc\Downloads\RedeSocialEventosAdmin\RedeSocialEventosAdmin\RedeSocialEventosAdmin\bin\Debug\net8.0-windows\RedeSocialEventosAdmin.pdb
+C:\Users\acloc\Downloads\RedeSocialEventosAdmin\RedeSocialEventosAdmin\RedeSocialEventosAdmin\bin\Debug\net8.0-windows\BouncyCastle.Cryptography.dll
+C:\Users\acloc\Downloads\RedeSocialEventosAdmin\RedeSocialEventosAdmin\RedeSocialEventosAdmin\bin\Debug\net8.0-windows\FontAwesome.Sharp.dll
+C:\Users\acloc\Downloads\RedeSocialEventosAdmin\RedeSocialEventosAdmin\RedeSocialEventosAdmin\bin\Debug\net8.0-windows\Google.Protobuf.dll
+C:\Users\acloc\Downloads\RedeSocialEventosAdmin\RedeSocialEventosAdmin\RedeSocialEventosAdmin\bin\Debug\net8.0-windows\Guna.UI2.dll
+C:\Users\acloc\Downloads\RedeSocialEventosAdmin\RedeSocialEventosAdmin\RedeSocialEventosAdmin\bin\Debug\net8.0-windows\K4os.Compression.LZ4.dll
+C:\Users\acloc\Downloads\RedeSocialEventosAdmin\RedeSocialEventosAdmin\RedeSocialEventosAdmin\bin\Debug\net8.0-windows\K4os.Compression.LZ4.Streams.dll
+C:\Users\acloc\Downloads\RedeSocialEventosAdmin\RedeSocialEventosAdmin\RedeSocialEventosAdmin\bin\Debug\net8.0-windows\K4os.Hash.xxHash.dll
+C:\Users\acloc\Downloads\RedeSocialEventosAdmin\RedeSocialEventosAdmin\RedeSocialEventosAdmin\bin\Debug\net8.0-windows\MySql.Data.dll
+C:\Users\acloc\Downloads\RedeSocialEventosAdmin\RedeSocialEventosAdmin\RedeSocialEventosAdmin\bin\Debug\net8.0-windows\System.IO.Pipelines.dll
+C:\Users\acloc\Downloads\RedeSocialEventosAdmin\RedeSocialEventosAdmin\RedeSocialEventosAdmin\bin\Debug\net8.0-windows\System.Management.dll
+C:\Users\acloc\Downloads\RedeSocialEventosAdmin\RedeSocialEventosAdmin\RedeSocialEventosAdmin\bin\Debug\net8.0-windows\ZstdSharp.dll
+C:\Users\acloc\Downloads\RedeSocialEventosAdmin\RedeSocialEventosAdmin\RedeSocialEventosAdmin\bin\Debug\net8.0-windows\runtimes\win-x64\native\comerr64.dll
+C:\Users\acloc\Downloads\RedeSocialEventosAdmin\RedeSocialEventosAdmin\RedeSocialEventosAdmin\bin\Debug\net8.0-windows\runtimes\win-x64\native\gssapi64.dll
+C:\Users\acloc\Downloads\RedeSocialEventosAdmin\RedeSocialEventosAdmin\RedeSocialEventosAdmin\bin\Debug\net8.0-windows\runtimes\win-x64\native\k5sprt64.dll
+C:\Users\acloc\Downloads\RedeSocialEventosAdmin\RedeSocialEventosAdmin\RedeSocialEventosAdmin\bin\Debug\net8.0-windows\runtimes\win-x64\native\krb5_64.dll
+C:\Users\acloc\Downloads\RedeSocialEventosAdmin\RedeSocialEventosAdmin\RedeSocialEventosAdmin\bin\Debug\net8.0-windows\runtimes\win-x64\native\krbcc64.dll
+C:\Users\acloc\Downloads\RedeSocialEventosAdmin\RedeSocialEventosAdmin\RedeSocialEventosAdmin\bin\Debug\net8.0-windows\runtimes\win\lib\net7.0\System.Management.dll
+C:\Users\acloc\Downloads\RedeSocialEventosAdmin\RedeSocialEventosAdmin\RedeSocialEventosAdmin\obj\Debug\net8.0-windows\RedeSocialEventosAdmin.csproj.AssemblyReference.cache
+C:\Users\acloc\Downloads\RedeSocialEventosAdmin\RedeSocialEventosAdmin\RedeSocialEventosAdmin\obj\Debug\net8.0-windows\RedeSocialEventosAdmin.Form1.resources
+C:\Users\acloc\Downloads\RedeSocialEventosAdmin\RedeSocialEventosAdmin\RedeSocialEventosAdmin\obj\Debug\net8.0-windows\RedeSocialEventosAdmin.Forms.FrmDashboard.resources
+C:\Users\acloc\Downloads\RedeSocialEventosAdmin\RedeSocialEventosAdmin\RedeSocialEventosAdmin\obj\Debug\net8.0-windows\RedeSocialEventosAdmin.Forms.FrmLogin.resources
+C:\Users\acloc\Downloads\RedeSocialEventosAdmin\RedeSocialEventosAdmin\RedeSocialEventosAdmin\obj\Debug\net8.0-windows\RedeSocialEventosAdmin.Forms.FrmPerfil.resources
+C:\Users\acloc\Downloads\RedeSocialEventosAdmin\RedeSocialEventosAdmin\RedeSocialEventosAdmin\obj\Debug\net8.0-windows\RedeSocialEventosAdmin.Forms.FrmPrincipal.resources
+C:\Users\acloc\Downloads\RedeSocialEventosAdmin\RedeSocialEventosAdmin\RedeSocialEventosAdmin\obj\Debug\net8.0-windows\RedeSocialEventosAdmin.Forms.FrmRelatorios.resources
+C:\Users\acloc\Downloads\RedeSocialEventosAdmin\RedeSocialEventosAdmin\RedeSocialEventosAdmin\obj\Debug\net8.0-windows\RedeSocialEventosAdmin.Forms.FrmUsuarioMockCadastro.resources
+C:\Users\acloc\Downloads\RedeSocialEventosAdmin\RedeSocialEventosAdmin\RedeSocialEventosAdmin\obj\Debug\net8.0-windows\RedeSocialEventosAdmin.Forms.FrmUsuarios.resources
+C:\Users\acloc\Downloads\RedeSocialEventosAdmin\RedeSocialEventosAdmin\RedeSocialEventosAdmin\obj\Debug\net8.0-windows\RedeSocialEventosAdmin.csproj.GenerateResource.cache
+C:\Users\acloc\Downloads\RedeSocialEventosAdmin\RedeSocialEventosAdmin\RedeSocialEventosAdmin\obj\Debug\net8.0-windows\RedeSocialEventosAdmin.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\acloc\Downloads\RedeSocialEventosAdmin\RedeSocialEventosAdmin\RedeSocialEventosAdmin\obj\Debug\net8.0-windows\RedeSocialEventosAdmin.AssemblyInfoInputs.cache
+C:\Users\acloc\Downloads\RedeSocialEventosAdmin\RedeSocialEventosAdmin\RedeSocialEventosAdmin\obj\Debug\net8.0-windows\RedeSocialEventosAdmin.AssemblyInfo.cs
+C:\Users\acloc\Downloads\RedeSocialEventosAdmin\RedeSocialEventosAdmin\RedeSocialEventosAdmin\obj\Debug\net8.0-windows\RedeSocialEventosAdmin.csproj.CoreCompileInputs.cache
+C:\Users\acloc\Downloads\RedeSocialEventosAdmin\RedeSocialEventosAdmin\RedeSocialEventosAdmin\obj\Debug\net8.0-windows\RedeSoci.008CB345.Up2Date
+C:\Users\acloc\Downloads\RedeSocialEventosAdmin\RedeSocialEventosAdmin\RedeSocialEventosAdmin\obj\Debug\net8.0-windows\RedeSocialEventosAdmin.dll
+C:\Users\acloc\Downloads\RedeSocialEventosAdmin\RedeSocialEventosAdmin\RedeSocialEventosAdmin\obj\Debug\net8.0-windows\refint\RedeSocialEventosAdmin.dll
+C:\Users\acloc\Downloads\RedeSocialEventosAdmin\RedeSocialEventosAdmin\RedeSocialEventosAdmin\obj\Debug\net8.0-windows\RedeSocialEventosAdmin.pdb
+C:\Users\acloc\Downloads\RedeSocialEventosAdmin\RedeSocialEventosAdmin\RedeSocialEventosAdmin\obj\Debug\net8.0-windows\RedeSocialEventosAdmin.genruntimeconfig.cache
+C:\Users\acloc\Downloads\RedeSocialEventosAdmin\RedeSocialEventosAdmin\RedeSocialEventosAdmin\obj\Debug\net8.0-windows\ref\RedeSocialEventosAdmin.dll
+C:\Geral 2026\Projetos\VS Code\-\SocialJoin\Projeto-Integrador\desktop\RedeSocialEventosAdmin\bin\Debug\net8.0-windows\RedeSocialEventosAdmin.exe
+C:\Geral 2026\Projetos\VS Code\-\SocialJoin\Projeto-Integrador\desktop\RedeSocialEventosAdmin\bin\Debug\net8.0-windows\RedeSocialEventosAdmin.deps.json
+C:\Geral 2026\Projetos\VS Code\-\SocialJoin\Projeto-Integrador\desktop\RedeSocialEventosAdmin\bin\Debug\net8.0-windows\RedeSocialEventosAdmin.runtimeconfig.json
+C:\Geral 2026\Projetos\VS Code\-\SocialJoin\Projeto-Integrador\desktop\RedeSocialEventosAdmin\bin\Debug\net8.0-windows\RedeSocialEventosAdmin.dll
+C:\Geral 2026\Projetos\VS Code\-\SocialJoin\Projeto-Integrador\desktop\RedeSocialEventosAdmin\bin\Debug\net8.0-windows\RedeSocialEventosAdmin.pdb
+C:\Geral 2026\Projetos\VS Code\-\SocialJoin\Projeto-Integrador\desktop\RedeSocialEventosAdmin\bin\Debug\net8.0-windows\BouncyCastle.Cryptography.dll
+C:\Geral 2026\Projetos\VS Code\-\SocialJoin\Projeto-Integrador\desktop\RedeSocialEventosAdmin\bin\Debug\net8.0-windows\FontAwesome.Sharp.dll
+C:\Geral 2026\Projetos\VS Code\-\SocialJoin\Projeto-Integrador\desktop\RedeSocialEventosAdmin\bin\Debug\net8.0-windows\Google.Protobuf.dll
+C:\Geral 2026\Projetos\VS Code\-\SocialJoin\Projeto-Integrador\desktop\RedeSocialEventosAdmin\bin\Debug\net8.0-windows\Guna.UI2.dll
+C:\Geral 2026\Projetos\VS Code\-\SocialJoin\Projeto-Integrador\desktop\RedeSocialEventosAdmin\bin\Debug\net8.0-windows\K4os.Compression.LZ4.dll
+C:\Geral 2026\Projetos\VS Code\-\SocialJoin\Projeto-Integrador\desktop\RedeSocialEventosAdmin\bin\Debug\net8.0-windows\K4os.Compression.LZ4.Streams.dll
+C:\Geral 2026\Projetos\VS Code\-\SocialJoin\Projeto-Integrador\desktop\RedeSocialEventosAdmin\bin\Debug\net8.0-windows\K4os.Hash.xxHash.dll
+C:\Geral 2026\Projetos\VS Code\-\SocialJoin\Projeto-Integrador\desktop\RedeSocialEventosAdmin\bin\Debug\net8.0-windows\MySql.Data.dll
+C:\Geral 2026\Projetos\VS Code\-\SocialJoin\Projeto-Integrador\desktop\RedeSocialEventosAdmin\bin\Debug\net8.0-windows\System.IO.Pipelines.dll
+C:\Geral 2026\Projetos\VS Code\-\SocialJoin\Projeto-Integrador\desktop\RedeSocialEventosAdmin\bin\Debug\net8.0-windows\System.Management.dll
+C:\Geral 2026\Projetos\VS Code\-\SocialJoin\Projeto-Integrador\desktop\RedeSocialEventosAdmin\bin\Debug\net8.0-windows\ZstdSharp.dll
+C:\Geral 2026\Projetos\VS Code\-\SocialJoin\Projeto-Integrador\desktop\RedeSocialEventosAdmin\bin\Debug\net8.0-windows\runtimes\win-x64\native\comerr64.dll
+C:\Geral 2026\Projetos\VS Code\-\SocialJoin\Projeto-Integrador\desktop\RedeSocialEventosAdmin\bin\Debug\net8.0-windows\runtimes\win-x64\native\gssapi64.dll
+C:\Geral 2026\Projetos\VS Code\-\SocialJoin\Projeto-Integrador\desktop\RedeSocialEventosAdmin\bin\Debug\net8.0-windows\runtimes\win-x64\native\k5sprt64.dll
+C:\Geral 2026\Projetos\VS Code\-\SocialJoin\Projeto-Integrador\desktop\RedeSocialEventosAdmin\bin\Debug\net8.0-windows\runtimes\win-x64\native\krb5_64.dll
+C:\Geral 2026\Projetos\VS Code\-\SocialJoin\Projeto-Integrador\desktop\RedeSocialEventosAdmin\bin\Debug\net8.0-windows\runtimes\win-x64\native\krbcc64.dll
+C:\Geral 2026\Projetos\VS Code\-\SocialJoin\Projeto-Integrador\desktop\RedeSocialEventosAdmin\bin\Debug\net8.0-windows\runtimes\win\lib\net7.0\System.Management.dll
+C:\Geral 2026\Projetos\VS Code\-\SocialJoin\Projeto-Integrador\desktop\RedeSocialEventosAdmin\obj\Debug\net8.0-windows\RedeSocialEventosAdmin.csproj.AssemblyReference.cache
+C:\Geral 2026\Projetos\VS Code\-\SocialJoin\Projeto-Integrador\desktop\RedeSocialEventosAdmin\obj\Debug\net8.0-windows\RedeSocialEventosAdmin.Form1.resources
+C:\Geral 2026\Projetos\VS Code\-\SocialJoin\Projeto-Integrador\desktop\RedeSocialEventosAdmin\obj\Debug\net8.0-windows\RedeSocialEventosAdmin.Forms.FrmDashboard.resources
+C:\Geral 2026\Projetos\VS Code\-\SocialJoin\Projeto-Integrador\desktop\RedeSocialEventosAdmin\obj\Debug\net8.0-windows\RedeSocialEventosAdmin.Forms.FrmLogin.resources
+C:\Geral 2026\Projetos\VS Code\-\SocialJoin\Projeto-Integrador\desktop\RedeSocialEventosAdmin\obj\Debug\net8.0-windows\RedeSocialEventosAdmin.Forms.FrmPerfil.resources
+C:\Geral 2026\Projetos\VS Code\-\SocialJoin\Projeto-Integrador\desktop\RedeSocialEventosAdmin\obj\Debug\net8.0-windows\RedeSocialEventosAdmin.Forms.FrmPrincipal.resources
+C:\Geral 2026\Projetos\VS Code\-\SocialJoin\Projeto-Integrador\desktop\RedeSocialEventosAdmin\obj\Debug\net8.0-windows\RedeSocialEventosAdmin.Forms.FrmRelatorios.resources
+C:\Geral 2026\Projetos\VS Code\-\SocialJoin\Projeto-Integrador\desktop\RedeSocialEventosAdmin\obj\Debug\net8.0-windows\RedeSocialEventosAdmin.Forms.FrmUsuarioMockCadastro.resources
+C:\Geral 2026\Projetos\VS Code\-\SocialJoin\Projeto-Integrador\desktop\RedeSocialEventosAdmin\obj\Debug\net8.0-windows\RedeSocialEventosAdmin.Forms.FrmUsuarios.resources
+C:\Geral 2026\Projetos\VS Code\-\SocialJoin\Projeto-Integrador\desktop\RedeSocialEventosAdmin\obj\Debug\net8.0-windows\RedeSocialEventosAdmin.csproj.GenerateResource.cache
+C:\Geral 2026\Projetos\VS Code\-\SocialJoin\Projeto-Integrador\desktop\RedeSocialEventosAdmin\obj\Debug\net8.0-windows\RedeSocialEventosAdmin.GeneratedMSBuildEditorConfig.editorconfig
+C:\Geral 2026\Projetos\VS Code\-\SocialJoin\Projeto-Integrador\desktop\RedeSocialEventosAdmin\obj\Debug\net8.0-windows\RedeSocialEventosAdmin.AssemblyInfoInputs.cache
+C:\Geral 2026\Projetos\VS Code\-\SocialJoin\Projeto-Integrador\desktop\RedeSocialEventosAdmin\obj\Debug\net8.0-windows\RedeSocialEventosAdmin.AssemblyInfo.cs
+C:\Geral 2026\Projetos\VS Code\-\SocialJoin\Projeto-Integrador\desktop\RedeSocialEventosAdmin\obj\Debug\net8.0-windows\RedeSocialEventosAdmin.csproj.CoreCompileInputs.cache
+C:\Geral 2026\Projetos\VS Code\-\SocialJoin\Projeto-Integrador\desktop\RedeSocialEventosAdmin\obj\Debug\net8.0-windows\RedeSocialEventosAdmin.sourcelink.json
+C:\Geral 2026\Projetos\VS Code\-\SocialJoin\Projeto-Integrador\desktop\RedeSocialEventosAdmin\obj\Debug\net8.0-windows\RedeSoci.008CB345.Up2Date
+C:\Geral 2026\Projetos\VS Code\-\SocialJoin\Projeto-Integrador\desktop\RedeSocialEventosAdmin\obj\Debug\net8.0-windows\RedeSocialEventosAdmin.dll
+C:\Geral 2026\Projetos\VS Code\-\SocialJoin\Projeto-Integrador\desktop\RedeSocialEventosAdmin\obj\Debug\net8.0-windows\refint\RedeSocialEventosAdmin.dll
+C:\Geral 2026\Projetos\VS Code\-\SocialJoin\Projeto-Integrador\desktop\RedeSocialEventosAdmin\obj\Debug\net8.0-windows\RedeSocialEventosAdmin.pdb
+C:\Geral 2026\Projetos\VS Code\-\SocialJoin\Projeto-Integrador\desktop\RedeSocialEventosAdmin\obj\Debug\net8.0-windows\RedeSocialEventosAdmin.genruntimeconfig.cache
+C:\Geral 2026\Projetos\VS Code\-\SocialJoin\Projeto-Integrador\desktop\RedeSocialEventosAdmin\obj\Debug\net8.0-windows\ref\RedeSocialEventosAdmin.dll
+C:\Geral 2026\Projetos\VS Code\-\SocialJoin\Projeto-Integrador\desktop\RedeSocialEventosAdmin\obj\Debug\net8.0-windows\RedeSocialEventosAdmin.Forms.FrmComunidadeModal.resources
+C:\Geral 2026\Projetos\VS Code\-\SocialJoin\Projeto-Integrador\desktop\RedeSocialEventosAdmin\obj\Debug\net8.0-windows\RedeSocialEventosAdmin.Forms.FrmComunidades.resources
+C:\Geral 2026\Projetos\VS Code\-\SocialJoin\Projeto-Integrador\desktop\RedeSocialEventosAdmin\obj\Debug\net8.0-windows\RedeSocialEventosAdmin.Forms.FrmEventoModal.resources
+C:\Geral 2026\Projetos\VS Code\-\SocialJoin\Projeto-Integrador\desktop\RedeSocialEventosAdmin\obj\Debug\net8.0-windows\RedeSocialEventosAdmin.Forms.FrmEventos.resources
+C:\Geral 2026\Projetos\VS Code\-\SocialJoin\Projeto-Integrador\desktop\RedeSocialEventosAdmin\obj\Debug\net8.0-windows\RedeSocialEventosAdmin.Forms.FrmModeracao.resources

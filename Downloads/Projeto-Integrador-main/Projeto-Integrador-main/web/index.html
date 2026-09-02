@@ -1,0 +1,1732 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel - Rede Social</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <section id="welcome-screen" class="welcome-screen active">
+        <div class="welcome-page">
+            <header class="welcome-nav">
+                <a class="welcome-brand" href="#" onclick="return false;">
+                    <span class="welcome-brand-mark"><i class="material-icons">hub</i></span>
+                    SocialJoin
+                </a>
+                <div class="welcome-nav-actions">
+                    <span>Já faz parte da comunidade?</span>
+                    <button class="welcome-login-link" onclick="app.selecionarOpcao('login')">Entrar</button>
+                </div>
+            </header>
+
+            <div class="welcome-layout">
+                <div class="welcome-copy">
+                    <div class="welcome-eyebrow"><span></span> Sua próxima experiência começa aqui</div>
+                    <h1>Encontre pessoas, <em>lugares</em> e momentos para lembrar.</h1>
+                    <p>Uma comunidade para descobrir eventos, entrar em conversas e construir conexões que saem da tela.
+                    </p>
+                    <div class="welcome-actions">
+                        <button class="btn-primary welcome-btn" onclick="app.selecionarOpcao('cadastro')">Criar minha
+                            conta <i class="material-icons">arrow_forward</i></button>
+                        <button class="btn-ghost welcome-btn" onclick="app.selecionarOpcao('visitante')">Explorar sem
+                            conta <i class="material-icons">north_east</i></button>
+                    </div>
+                    <div class="welcome-proof"><i class="material-icons">verified</i><span>Descubra sua próxima
+                            comunidade favorita.</span></div>
+                </div>
+
+                <div class="welcome-preview" aria-label="Prévia de eventos da comunidade">
+                    <div class="preview-orbit preview-orbit-one"></div>
+                    <div class="preview-orbit preview-orbit-two"></div>
+                    <div class="preview-window">
+                        <div class="preview-window-top"><span>Próximos eventos</span><i
+                                class="material-icons">more_horiz</i></div>
+                        <div class="preview-date" id="preview-date">
+                            <strong>--</strong><span>AGENDA<br><b>carregando</b></span>
+                        </div>
+                        <div id="preview-events" class="preview-events" aria-live="polite">
+                            <div class="preview-loading">Buscando próximos eventos...</div>
+                        </div>
+                        <div class="preview-footer"><span
+                                class="preview-avatars"><b>+</b><b>+</b><b>+</b></span><span>novas conexões começam
+                                aqui</span><button class="preview-events-link" onclick="app.explorarEventos()">Ver
+                                agenda completa</button></div>
+                    </div>
+                    <div class="preview-sticker"><i class="material-icons">favorite</i><span>Feito
+                            para<br><b>conectar</b></span></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div id="app-shell" class="app-shell">
+        <aside>
+            <div class="brand">SocialJoin</div>
+            <nav class="nav-menu">
+                <button class="nav-btn active" id="tab-eventos" onclick="app.mudarAba('eventos')">
+                    <i class="material-icons">event</i> Eventos
+                </button>
+                <button class="nav-btn" id="tab-feed" onclick="app.mudarAba('feed')">
+                    <i class="material-icons">dashboard</i> Feed Geral
+                </button>
+                <button class="nav-btn" id="tab-comunidades" onclick="app.mudarAba('comunidades')">
+                    <i class="material-icons">forum</i> Comunidades
+                </button>
+                <button class="nav-btn" id="tab-busca" onclick="app.mudarAba('busca')">
+                    <i class="material-icons">people</i> Pessoas
+                </button>
+            </nav>
+            <div class="sidebar-footer" id="header-buttons"></div>
+        </aside>
+
+        <div class="app-content">
+
+            <!-- CHAT LATERAL -->
+            <section id="chat-sidebar" class="chat-sidebar">
+                <div class="chat-sidebar-header">
+                    <h3>Mensagens</h3>
+
+                    <button id="chat-toggle-btn" class="chat-toggle-btn" type="button" title="Recolher mensagens">
+                        ‹
+                    </button>
+                </div>
+
+                <div class="chat-search">
+                    <input id="chat-search-input" type="text" placeholder="Buscar conversa..." autocomplete="off">
+                </div>
+
+                <div id="chat-conversations" class="chat-conversations">
+                    <p class="chat-empty">
+                        Nenhuma conversa ainda.
+                    </p>
+                </div>
+            </section>
+
+
+            <main id="app-main">
+                <div id="view-feed" class="view-section">
+                    <div class="page-header">
+                        <div>
+                            <span class="section-kicker">Conversa que vira encontro</span>
+                            <h1>O que está acontecendo</h1>
+                        </div>
+                        <button class="btn-primary" onclick="app.abrirModalPost()">Novo Post</button>
+                    </div>
+                    <div class="feed-layout">
+                        <div class="feed-main">
+                            <div class="feed-toolbar">
+                                <div class="feed-tabs" role="tablist" aria-label="Filtro do feed">
+                                    <button class="feed-tab active" id="feed-tab-todos"
+                                        onclick="app.mudarFiltroFeed('todos')">Tudo</button>
+                                    <button class="feed-tab" id="feed-tab-comunidades"
+                                        onclick="app.mudarFiltroFeed('comunidades')">Comunidades</button>
+                                    <button class="feed-tab" id="feed-tab-meus"
+                                        onclick="app.mudarFiltroFeed('meus')">Meus posts</button>
+                                </div>
+                                <select id="feed-ordenacao" onchange="app.mudarOrdenacaoFeed(this.value)"
+                                    aria-label="Ordenar feed">
+                                    <option value="recentes">Mais recentes</option>
+                                    <option value="comentados">Mais comentados</option>
+                                    <option value="curtidos">Mais curtidos</option>
+                                </select>
+                            </div>
+                            <div id="feed-comunidades-filtros" class="feed-comunidades-filtros"></div>
+
+                            <div id="feed-container">
+                                Carregando feed...
+                            </div>
+                        </div>
+                        <div class="feed-sidebar">
+                            <div id="feed-sidebar-recomendado-heading" class="feed-sidebar-heading">
+                                <span id="feed-sidebar-recomendado-kicker" class="section-kicker">
+                                    Para você
+                                </span>
+
+                                <h2 id="feed-sidebar-recomendado-titulo">
+                                    Recomendado
+                                </h2>
+                            </div>
+
+                            <div id="feed-recomendados" class="feed-recomendados">
+                                Carregando sugestões...
+                            </div>
+
+                            <div class="feed-sidebar-heading" style="margin-top: 18px;"><span
+                                    class="section-kicker">Perfil parecido</span>
+                                <h2>Pessoas para seguir</h2>
+                            </div>
+                            <div id="feed-sugestoes-pessoas" class="feed-sugestoes-pessoas">Carregando pessoas...</div>
+
+                            <div class="feed-sidebar-heading" style="margin-top: 18px;"><span class="section-kicker">Não
+                                    perca</span>
+                                <h2>Próximos encontros</h2>
+                            </div>
+                            <div id="feed-eventos-destaque">Carregando eventos...</div>
+                            <button class="feed-sidebar-link" onclick="app.mudarAba('eventos')">Ver agenda completa <i
+                                    class="material-icons">arrow_forward</i></button>
+                        </div>
+
+                    </div>
+                </div>
+                <div id="view-salvos" class="view-section">
+
+                    <div class="page-header">
+
+                        <div>
+                            <span class="section-kicker">
+                                Sua coleção
+                            </span>
+
+                            <h1>Itens salvos</h1>
+                        </div>
+
+                    </div>
+
+
+                    <div class="salvos-intro">
+                        <i class="material-icons">
+                            bookmark
+                        </i>
+
+                        <p>
+                            Publicações que você salvou para
+                            encontrar novamente depois.
+                        </p>
+                    </div>
+
+
+                    <div id="salvos-container">
+                        Carregando itens salvos...
+                    </div>
+
+                </div>
+
+                <div id="view-post-detalhes" class="view-section">
+                    <button class="detail-back-button" onclick="app.voltarDoPost()">
+                        <i class="material-icons">arrow_back</i> Voltar ao feed
+                    </button>
+                    <div id="post-detalhes-conteudo"></div>
+                </div>
+
+                <div id="view-eventos" class="view-section active">
+                    <div class="page-header">
+                        <div>
+                            <span class="section-kicker">Viva mais fora da tela</span>
+                            <h1>Descubra seu próximo evento</h1>
+                        </div>
+                        <button class="btn-primary" onclick="app.abrirModal('evento-modal')">Novo Evento</button>
+                    </div>
+                    <div id="evento-destaque" class="evento-destaque"></div>
+                    <div class="eventos-tabs" role="tablist" aria-label="Eventos">
+                        <button class="eventos-tab active" id="eventos-tab-descobrir"
+                            onclick="app.mudarVisaoEventos('descobrir')">Descobrir</button>
+                        <button class="eventos-tab" id="eventos-tab-meus" onclick="app.mudarVisaoEventos('meus')">Meus
+                            eventos</button>
+                    </div>
+                    <div class="eventos-filtros">
+                        <input type="text" id="filtro-evento-texto" placeholder="Buscar por nome ou descrição..."
+                            oninput="app.buscarEventosComDebounce()">
+
+                        <select id="filtro-evento-periodo" onchange="app.filtrarEventos()">
+
+                            <option value="">Qualquer data</option>
+                            <option value="hoje">Hoje</option>
+                            <option value="semana">Esta semana</option>
+                            <option value="mes">Este mês</option>
+                            <option value="personalizado">Intervalo personalizado</option>
+                        </select>
+
+                        <select id="filtro-evento-comunidade" onchange="app.filtrarEventos()">
+                            <option value="">Todas as comunidades</option>
+                        </select>
+
+                        <select id="filtro-evento-status" onchange="app.filtrarEventos()">
+                            <option value="">Todos os status</option>
+                            <option value="AGENDADO">Agendados</option>
+                            <option value="CANCELADO">Cancelados</option>
+                        </select>
+                        <select id="filtro-evento-categoria" onchange="app.filtrarEventos()">
+                            <option value="">Todas as categorias</option>
+                            <option value="Tecnologia">Tecnologia</option>
+                            <option value="Arte">Arte</option>
+                            <option value="Música">Música</option>
+                            <option value="Esportes">Esportes</option>
+                            <option value="Educação">Educação</option>
+                            <option value="Networking">Networking</option>
+                            <option value="Cultura">Cultura</option>
+                        </select>
+                        <select id="filtro-evento-formato" onchange="app.filtrarEventos()">
+                            <option value="">Todos os formatos</option>
+                            <option value="presencial">Presenciais</option>
+                            <option value="online">Online</option>
+                        </select>
+                    </div>
+                    <div id="filtro-evento-intervalo" style="
+        display:none;
+        gap:10px;
+        margin-bottom:16px;
+    ">
+
+                        <input type="date" id="filtro-evento-data-inicio" onchange="app.filtrarEventos()">
+
+                        <input type="date" id="filtro-evento-data-fim" onchange="app.filtrarEventos()">
+                    </div>
+                    <div id="eventos-container" class="eventos-container">
+                        Carregando eventos...
+                    </div>
+                    <div id="eventos-paginacao" style="
+        display:flex;
+        justify-content:center;
+        align-items:center;
+        gap:12px;
+        margin-top:20px;
+     ">
+
+                        <button class="btn-secondary" id="btn-eventos-anterior" onclick="app.paginaAnteriorEventos()">
+                            Anterior
+                        </button>
+
+                        <span id="eventos-pagina-info">
+                            Página 1 de 1
+                        </span>
+
+                        <button class="btn-secondary" id="btn-eventos-proxima" onclick="app.proximaPaginaEventos()">
+                            Próxima
+                        </button>
+                    </div>
+                </div>
+
+                <div id="view-comunidades" class="view-section">
+                    <div class="page-header">
+                        <div>
+                            <span class="section-kicker">Encontre sua turma</span>
+                            <h1>Comunidades</h1>
+                        </div>
+                        <button class="btn-primary" onclick="app.abrirModal('comunidade-modal')">Nova
+                            Comunidade</button>
+                    </div>
+
+                    <div class="comunidades-tabs">
+                        <button id="comunidades-tab-todas" class="comunidades-tab active"
+                            onclick="app.mudarFiltroComunidades('todas')">
+                            Todas
+                        </button>
+
+                        <button id="comunidades-tab-minhas" class="comunidades-tab"
+                            onclick="app.mudarFiltroComunidades('minhas')">
+                            Minhas comunidades
+                        </button>
+
+                        <button id="comunidades-tab-criadas" class="comunidades-tab"
+                            onclick="app.mudarFiltroComunidades('criadas')">
+                            Criadas por mim
+                        </button>
+                    </div>
+                    <div class="comunidades-toolbar">
+                        <input class="search-bar" id="comunidades-search" type="search"
+                            placeholder="Buscar por nome ou interesse..." oninput="app.filtrarComunidades()">
+                        <select id="comunidades-ordenacao" onchange="app.filtrarComunidades()">
+                            <option value="membros">Mais populares</option>
+                            <option value="recentes">Mais recentes</option>
+                            <option value="nome">Nome A-Z</option>
+                        </select>
+                    </div>
+                    <div id="comunidades-container" class="comunidades-grid">Carregando comunidades...</div>
+                </div>
+
+                <!-- PERFIL -->
+<div id="view-perfil" class="view-section">
+
+    <div class="perfil-view-header">
+        <button
+            type="button"
+            class="detail-back-button"
+            onclick="app.voltarDoPerfil()"
+        >
+            <i class="material-icons">arrow_back</i>
+            <span>Voltar</span>
+        </button>
+    </div>
+
+    <div id="perfil-conteudo"></div>
+
+</div>
+
+
+
+                <div id="view-busca" class="view-section">
+                    <div class="page-header">
+                        <div><span class="section-kicker">Descubra quem faz acontecer</span>
+                            <h1>Pessoas</h1>
+                        </div>
+                    </div>
+                    <div class="pessoas-search-area">
+                        <i class="material-icons">
+                            search
+                        </i>
+
+                        <input id="search-input" type="text" placeholder="Buscar por nome ou username..."
+                            oninput="app.filtrarUsuarios()">
+                    </div>
+
+                    <div class="pessoas-filtros">
+
+                        <button id="pessoas-filtro-todas" class="pessoas-filtro-btn active" type="button"
+                            onclick="app.mudarFiltroPessoas('todas')">
+                            Todas
+                        </button>
+
+                        <button id="pessoas-filtro-comuns" class="pessoas-filtro-btn" type="button"
+                            onclick="app.mudarFiltroPessoas('comuns')">
+                            Das minhas comunidades
+                        </button>
+
+                        <button id="pessoas-filtro-organizadores" class="pessoas-filtro-btn" type="button"
+                            onclick="app.mudarFiltroPessoas('organizadores')">
+                            Organizadores
+                        </button>
+
+                    </div>
+
+                    <div class="pessoas-sugestoes">
+                        <div><span class="section-kicker">Para conhecer</span>
+                            <h2>Descubra novas pessoas</h2>
+                        </div>
+                        <p>Encontre organizadores, participantes e novas conversas.</p>
+                    </div>
+
+                    <div id="users-container" class="pessoas-grid">Carregando...</div>
+
+
+                </div>
+
+
+
+                <div id="view-subreddit" class="view-section">
+
+                    <button class="detail-back-button" onclick="app.mudarAba('comunidades')">
+                        <i class="material-icons">arrow_back</i>
+                        Voltar
+                    </button>
+
+
+                    <section class="comunidade-detalhe-header">
+
+                        <div class="comunidade-detalhe-principal">
+
+                            <div id="sub-community-visual" class="comunidade-detalhe-avatar">
+                                C
+                            </div>
+
+
+                            <div class="comunidade-detalhe-identidade">
+
+                                <div class="comunidade-detalhe-titulo-linha">
+
+                                    <h1 id="sub-titulo">
+                                        Nome da Comunidade
+                                    </h1>
+
+                                    <span id="sub-status" class="comunidade-detalhe-status">
+                                    </span>
+
+                                </div>
+
+
+                                <p id="sub-desc">
+                                    Descrição
+                                </p>
+
+
+                                <div class="comunidade-detalhe-meta">
+
+                                    <span id="sub-categoria">
+                                        Geral
+                                    </span>
+
+                                    <span class="comunidade-meta-separador">
+                                        •
+                                    </span>
+
+                                    <span>
+                                        <i class="material-icons">group</i>
+                                        <strong id="sub-total-membros">
+                                            0
+                                        </strong>
+                                        membros
+                                    </span>
+
+                                    <span class="comunidade-meta-separador">
+                                        •
+                                    </span>
+
+                                    <span>
+                                        <i class="material-icons">event</i>
+                                        <strong id="sub-total-eventos">
+                                            0
+                                        </strong>
+                                        eventos
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="comunidade-detalhe-acoes">
+
+                            <button type="button" id="btn-gerenciar-comunidade" class="comunidade-btn-secundario"
+                                style="display:none;" onclick="
+                    app.gerenciarComunidade(
+                        app.comunidadeAtivaId
+                    )
+                ">
+                                <i class="material-icons">
+                                    settings
+                                </i>
+
+                                Gerenciar
+                            </button>
+
+
+                            <button type="button" id="btn-participar" class="comunidade-btn-secundario"
+                                onclick="app.participarComunidade()">
+                                Entrar
+                            </button>
+
+
+                            <button type="button" id="btn-postar-comunidade" class="comunidade-btn-postar"
+                                onclick="app.abrirModalPost()">
+                                <i class="material-icons">
+                                    add
+                                </i>
+
+                                Postar aqui
+                            </button>
+
+                        </div>
+
+                    </section>
+
+
+                    <div class="comunidade-tabs">
+
+                        <button class="comunidade-tab active" id="comunidade-tab-posts"
+                            onclick="app.mudarAbaComunidade('posts')">
+                            Posts
+                            <span id="comunidade-tab-posts-count">
+                                0
+                            </span>
+                        </button>
+
+                        <button class="comunidade-tab" id="comunidade-tab-eventos"
+                            onclick="app.mudarAbaComunidade('eventos')">
+                            Eventos
+                            <span id="comunidade-tab-eventos-count">
+                                0
+                            </span>
+                        </button>
+
+                        <button class="comunidade-tab" id="comunidade-tab-membros"
+                            onclick="app.mudarAbaComunidade('membros')">
+                            Membros
+                            <span id="comunidade-tab-membros-count">
+                                0
+                            </span>
+                        </button>
+
+                    </div>
+
+
+                    <div id="subreddit-feed-container"></div>
+
+                </div>
+
+                <div id="view-evento-detalhes" class="view-section">
+
+                    <button class="detail-back-button" onclick="app.voltarParaEventos()">
+                        <i class="material-icons">arrow_back</i>
+                        Voltar para eventos
+                    </button>
+
+                    <div id="evento-detalhes-conteudo"></div>
+
+                </div>
+            </main>
+            <section id="chat-window" class="chat-window">
+
+                <div class="chat-window-header">
+                    <div class="chat-user-info">
+                        <div id="chat-user-avatar" class="chat-user-avatar">
+                            ?
+                        </div>
+
+                        <div class="chat-user-meta">
+                            <div class="chat-user-line">
+                                <strong id="chat-user-name">
+                                    Conversa
+                                </strong>
+                                <span id="chat-user-status" class="chat-user-status">online</span>
+                            </div>
+
+                            <span id="chat-user-username" class="chat-user-username"></span>
+                        </div>
+                    </div>
+
+                    <button id="chat-close-btn" class="chat-close-btn" type="button" title="Fechar conversa">
+                        ×
+                    </button>
+                </div>
+
+                <div id="chat-messages" class="chat-messages">
+                </div>
+
+                <form id="chat-message-form" class="chat-message-form">
+
+                    <input id="chat-message-input" type="text" placeholder="Digite uma mensagem..." autocomplete="off"
+                        maxlength="2000">
+
+                    <button type="submit">
+                        Enviar
+                    </button>
+
+                </form>
+
+            </section>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="auth-modal" role="dialog" aria-modal="true" aria-labelledby="auth-title">
+        <div class="modal auth-modal">
+            <button type="button" class="modal-close-btn" aria-label="Fechar" onclick="app.fecharModal('auth-modal')">
+                <i class="material-icons">close</i>
+            </button>
+            <div class="auth-intro">
+                <span class="auth-kicker">SocialJoin</span>
+                <h2 id="auth-title">Acesso ao Site</h2>
+                <p id="auth-subtitle">Entre para acompanhar eventos, comunidades e conversas.</p>
+            </div>
+
+            <div class="auth-tabs" role="tablist" aria-label="Autenticação">
+                <button type="button" class="auth-tab active" id="auth-tab-login"
+                    onclick="app.definirModoAuth(false)">Entrar</button>
+                <button type="button" class="auth-tab" id="auth-tab-register" onclick="app.definirModoAuth(true)">Criar
+                    conta</button>
+            </div>
+
+            <div id="auth-feedback" class="auth-feedback" role="alert" aria-live="polite"></div>
+
+            <div class="auth-field auth-register-only">
+                <label for="auth-nome-completo">Nome completo</label>
+                <div class="auth-input-wrap"><i class="material-icons">person_outline</i><input type="text"
+                        id="auth-nome-completo" placeholder="Como podemos chamar você?" autocomplete="off"></div>
+            </div>
+
+            <div class="auth-field auth-register-only">
+                <label for="auth-nome">Nome de exibição</label>
+                <div class="auth-input-wrap"><i class="material-icons">badge</i><input type="text" id="auth-nome"
+                        placeholder="Seu nome na comunidade" autocomplete="off"></div>
+            </div>
+
+            <div class="auth-field auth-register-only">
+                <label for="auth-username">Nome de usuário</label>
+                <div class="auth-input-wrap"><i class="material-icons">alternate_email</i><input type="text"
+                        id="auth-username" placeholder="seu_usuario" autocomplete="off"></div>
+            </div>
+
+            <div class="auth-field auth-register-only">
+                <label for="auth-data-nascimento">Data de nascimento</label>
+                <div class="auth-input-wrap"><i class="material-icons">cake</i><input type="date"
+                        id="auth-data-nascimento"></div>
+            </div>
+
+            <div class="auth-field">
+                <label for="auth-email" id="auth-email-label">E-mail ou telefone</label>
+                <div class="auth-input-wrap"><i class="material-icons">mail_outline</i><input type="text"
+                        id="auth-email" placeholder="seu@email.com ou (00) 00000-0000" autocomplete="off"></div>
+            </div>
+
+            <div class="auth-field auth-register-only">
+                <label for="auth-telefone">Telefone <span>(opcional)</span></label>
+                <div class="auth-input-wrap"><i class="material-icons">phone</i><input type="tel" id="auth-telefone"
+                        placeholder="(00) 00000-0000" autocomplete="off"></div>
+            </div>
+
+            <div class="auth-field">
+                <label for="auth-senha">Senha</label>
+                <div class="auth-input-wrap"><i class="material-icons">lock_outline</i><input type="password"
+                        id="auth-senha" placeholder="Sua senha" autocomplete="current-password"
+                        oninput="app.atualizarForcaSenha()"><button type="button" class="password-toggle"
+                        onclick="app.alternarVisibilidadeSenha('auth-senha', this)" aria-label="Mostrar senha"><i
+                            class="material-icons">visibility</i></button></div>
+                <div id="auth-password-strength" class="password-strength" aria-live="polite"></div>
+            </div>
+
+            <div class="auth-field auth-register-only">
+                <label for="auth-confirmar-senha">Confirmar senha</label>
+                <div class="auth-input-wrap"><i class="material-icons">lock_reset</i><input type="password"
+                        id="auth-confirmar-senha" placeholder="Repita sua senha" autocomplete="new-password"><button
+                        type="button" class="password-toggle"
+                        onclick="app.alternarVisibilidadeSenha('auth-confirmar-senha', this)"
+                        aria-label="Mostrar senha"><i class="material-icons">visibility</i></button></div>
+            </div>
+
+            <div class="auth-field auth-register-only">
+                <label>Interesses</label>
+                <div class="auth-interesses-intro">Escolha até 5 temas que mais combinam com você.</div>
+                <div id="auth-interesses-list" class="auth-interesses-list" aria-label="Selecionar interesses">
+                </div>
+            </div>
+
+            <button type="button" class="btn-full auth-submit" id="auth-submit"
+                onclick="app.processarAuth()">Entrar</button>
+            <button type="button" class="auth-forgot" id="auth-forgot" onclick="app.recuperarSenha()">Esqueci minha
+                senha</button>
+            <button type="button" class="btn-cancel" onclick="app.fecharModal('auth-modal')">Cancelar</button>
+            <p class="auth-legal">Ao continuar, você concorda em participar da comunidade SocialJoin.</p>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="post-modal">
+        <div class="modal">
+            <h2 id="modal-post-title">Nova Publicação</h2>
+            <input type="text" id="post-titulo" placeholder="Título">
+            <textarea id="post-conteudo" placeholder="Conteúdo..."></textarea>
+            <select id="post-comunidade-id">
+                <option value="">Publicar no feed global</option>
+            </select>
+            <button class="btn-full" onclick="app.enviarPost()">Publicar</button>
+            <button class="btn-cancel" onclick="app.fecharModal('post-modal')">Cancelar</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="comunidade-modal">
+        <div class="modal">
+            <h2>Criar Comunidade</h2>
+            <input type="text" id="comunidade-nome" placeholder="Ex: Desenvolvedores Java">
+            <textarea id="comunidade-desc" placeholder="Qual o foco do grupo?"></textarea>
+            <select id="comunidade-categoria">
+                <option value="">Categoria</option>
+                <option>Tecnologia</option>
+                <option>Arte</option>
+                <option>Música</option>
+                <option>Esportes</option>
+                <option>Educação</option>
+                <option>Networking</option>
+                <option>Cultura</option>
+            </select>
+            <label for="comunidade-cor">Cor da comunidade</label>
+            <input type="color" id="comunidade-cor" value="#EA3F74">
+            <label for="comunidade-imagem">Imagem da comunidade (opcional)</label>
+            <input type="file" id="comunidade-imagem" accept="image/*">
+            <small class="form-hint">Escolha uma imagem que represente os interesses da sua comunidade.</small>
+            <button class="btn-full" onclick="app.criarComunidade()">Salvar</button>
+            <button class="btn-cancel" onclick="app.fecharModal('comunidade-modal')">Cancelar</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="evento-modal" role="dialog" aria-modal="true" aria-labelledby="evento-modal-title">
+        <div class="modal evento-modal">
+            <button type="button" class="modal-close-btn" onclick="app.fecharModal('evento-modal')"
+                aria-label="Fechar modal">
+                <i class="material-icons">close</i>
+            </button>
+
+            <div class="modal-header-intro">
+                <span class="modal-kicker"><i class="material-icons">event</i> Agenda & Encontros</span>
+                <h2 id="evento-modal-title">Organizar Novo Evento</h2>
+                <p>Preencha as informações para divulgar seu evento na comunidade.</p>
+            </div>
+
+            <div id="evento-feedback" class="form-feedback" role="alert" aria-live="polite"></div>
+
+            <form id="form-criar-evento" onsubmit="event.preventDefault(); app.criarEvento();">
+                <!-- Seção 1: Informações Básicas -->
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <i class="material-icons">info</i> Sobre o Evento
+                    </div>
+
+                    <div class="form-group">
+                        <label for="evento-titulo">Título do evento <span class="required">*</span></label>
+                        <div class="form-input-wrap">
+                            <i class="material-icons">title</i>
+                            <input type="text" id="evento-titulo"
+                                placeholder="Ex: Workshop de Java ou Encontro da Comunidade" required
+                                autocomplete="off">
+                        </div>
+                    </div>
+
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label for="evento-categoria">Categoria <span class="required">*</span></label>
+                            <div class="form-input-wrap">
+                                <i class="material-icons">category</i>
+                                <select id="evento-categoria" required>
+                                    <option value="">Selecione uma categoria</option>
+                                    <option value="Tecnologia">Tecnologia</option>
+                                    <option value="Arte">Arte</option>
+                                    <option value="Música">Música</option>
+                                    <option value="Esportes">Esportes</option>
+                                    <option value="Educação">Educação</option>
+                                    <option value="Networking">Networking</option>
+                                    <option value="Cultura">Cultura</option>
+                                    <option value="Games">Games</option>
+                                    <option value="Gastronomia">Gastronomia</option>
+                                    <option value="Saúde">Saúde</option>
+                                    <option value="Social">Social</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="evento-comunidade-id">Comunidade vinculada <span
+                                    class="optional">(opcional)</span></label>
+                            <div class="form-input-wrap">
+                                <i class="material-icons">groups</i>
+                                <select id="evento-comunidade-id">
+                                    <option value="">Nenhuma (Evento aberto / Global)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="evento-desc">Descrição e detalhes <span class="optional">(opcional)</span></label>
+                        <textarea id="evento-desc" rows="3"
+                            placeholder="Explique a proposta do evento, programação, requisitos ou recados importantes..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Seção 2: Data e Horários -->
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <i class="material-icons">schedule</i> Data e Horários
+                    </div>
+
+                    <div class="form-grid-3">
+                        <div class="form-group">
+                            <label for="evento-data">Data <span class="required">*</span></label>
+                            <div class="form-input-wrap">
+                                <i class="material-icons">calendar_today</i>
+                                <input type="date" id="evento-data" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="evento-horario-inicio">Início <span class="required">*</span></label>
+                            <div class="form-input-wrap">
+                                <i class="material-icons">schedule</i>
+                                <input type="time" id="evento-horario-inicio" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="evento-horario-fim">Término <span class="required">*</span></label>
+                            <div class="form-input-wrap">
+                                <i class="material-icons">schedule</i>
+                                <input type="time" id="evento-horario-fim" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="evento-encerramento-inscricoes">Encerramento das inscrições <span
+                                class="optional">(opcional)</span></label>
+                        <div class="form-input-wrap">
+                            <i class="material-icons">event_busy</i>
+                            <input type="datetime-local" id="evento-encerramento-inscricoes">
+                        </div>
+                        <small class="form-hint">Deixe em branco para permitir inscrições até o início do
+                            evento.</small>
+                    </div>
+                </div>
+
+                <!-- Seção 3: Local e Vagas -->
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <i class="material-icons">place</i> Local e Capacidade
+                    </div>
+
+                   <div class="form-grid-2">
+    <div class="form-group">
+        <label for="evento-local">
+            Localização / Link
+            <span class="required">*</span>
+        </label>
+
+        <div class="form-input-wrap">
+            <i class="material-icons">place</i>
+
+            <input
+                type="text"
+                id="evento-local"
+                placeholder="Ex: Auditório Bloco A ou Link do Meet"
+                required
+                autocomplete="off"
+            >
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="evento-limite">
+            Limite de participantes
+            <span class="optional">(opcional)</span>
+        </label>
+
+        <div class="form-input-wrap">
+            <i class="material-icons">people</i>
+
+            <input
+                type="number"
+                id="evento-limite"
+                min="1"
+                placeholder="Vazio = Sem limite"
+            >
+        </div>
+    </div>
+</div>
+
+<div class="form-group">
+    <label for="evento-preco">
+        Valor do ingresso
+        <span class="optional">(opcional)</span>
+    </label>
+
+    <div class="form-input-wrap">
+        <i class="material-icons">confirmation_number</i>
+
+        <input
+            type="number"
+            id="evento-preco"
+            min="0"
+            step="0.01"
+            placeholder="0,00"
+        >
+    </div>
+
+    <small class="form-hint">
+        Deixe em branco ou informe 0 para um evento gratuito.
+    </small>
+</div>
+                </div>
+
+                <!-- Seção 4: Capa e Configurações -->
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <i class="material-icons">photo_camera</i> Capa e Configurações
+                    </div>
+
+                    <div class="form-group">
+                        <label for="evento-capa">Imagem de capa <span class="optional">(opcional)</span></label>
+                        <div class="custom-file-upload">
+                            <input type="file" id="evento-capa" accept="image/*"
+                                onchange="app.atualizarPreviewCapaEvento(this)">
+                            <div class="file-upload-visual" id="evento-capa-preview-box">
+                                <i class="material-icons">cloud_upload</i>
+                                <span id="evento-capa-nome">Clique para selecionar uma imagem</span>
+                                <small>Formatos aceitos: JPG, PNG, WEBP</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="checkbox-card">
+                        <label class="checkbox-container">
+                            <input type="checkbox" id="evento-checkin">
+                            <span class="checkbox-custom"></span>
+                            <div class="checkbox-text">
+                                <strong>Exigir check-in dos participantes</strong>
+                                <span>A entrada e validação de ingressos serão realizadas pelo aplicativo mobile via QR
+                                    Code.</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn-full btn-primary auth-submit" id="btn-criar-evento">
+                        Agendar Evento
+                    </button>
+                    <button type="button" class="btn-cancel" onclick="app.fecharModal('evento-modal')">
+                        Cancelar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="gerenciar-comunidade-modal">
+
+        <div class="modal comunidade-gerenciar-modal">
+
+            <div class="comunidade-modal-header">
+
+                <div>
+                    <span class="section-kicker">
+                        Administração
+                    </span>
+
+                    <h2>Gerenciar comunidade</h2>
+
+                    <p>
+                        Atualize as informações e
+                        configurações da comunidade.
+                    </p>
+                </div>
+
+                <button type="button" class="modal-close" onclick="
+                    app.fecharModal(
+                        'gerenciar-comunidade-modal'
+                    )
+                " aria-label="Fechar">
+                    <i class="material-icons">
+                        close
+                    </i>
+                </button>
+
+            </div>
+
+
+            <div class="comunidade-modal-section">
+
+                <div class="comunidade-modal-section-title">
+                    <i class="material-icons">
+                        edit
+                    </i>
+
+                    <div>
+                        <strong>
+                            Informações básicas
+                        </strong>
+
+                        <span>
+                            Nome, descrição e categoria.
+                        </span>
+                    </div>
+                </div>
+
+
+                <div class="form-group">
+                    <label for="editar-comunidade-nome">
+                        Nome da comunidade
+                    </label>
+
+                    <input id="editar-comunidade-nome" type="text" placeholder="Nome da comunidade">
+                </div>
+
+
+                <div class="form-group">
+                    <label for="editar-comunidade-desc">
+                        Descrição
+                    </label>
+
+                    <textarea id="editar-comunidade-desc" rows="4" placeholder="Descreva a comunidade..."></textarea>
+                </div>
+
+
+                <div class="comunidade-modal-grid">
+
+                    <div class="form-group">
+                        <label for="editar-comunidade-categoria">
+                            Categoria
+                        </label>
+
+                        <select id="editar-comunidade-categoria">
+                            <!-- mantenha suas options atuais -->
+                        </select>
+                    </div>
+
+
+                    <div class="form-group">
+                        <label for="editar-comunidade-cor">
+                            Cor da comunidade
+                        </label>
+
+                        <div class="comunidade-cor-field">
+
+                            <input type="color" id="editar-comunidade-cor">
+
+                            <span>
+                                Cor de destaque
+                            </span>
+
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="comunidade-modal-section">
+
+                <div class="comunidade-modal-section-title">
+                    <i class="material-icons">
+                        image
+                    </i>
+
+                    <div>
+                        <strong>
+                            Aparência
+                        </strong>
+
+                        <span>
+                            Imagem usada nos cards e
+                            no cabeçalho da comunidade.
+                        </span>
+                    </div>
+                </div>
+
+
+                <label class="comunidade-upload" for="editar-comunidade-imagem">
+                    <i class="material-icons">
+                        add_photo_alternate
+                    </i>
+
+                    <div>
+                        <strong>
+                            Escolher nova imagem
+                        </strong>
+
+                        <span>
+                            JPG, PNG ou WEBP
+                        </span>
+                    </div>
+
+                    <span class="comunidade-upload-action">
+                        Selecionar
+                    </span>
+                </label>
+
+                <input type="file" id="editar-comunidade-imagem" accept="image/*" hidden>
+
+            </div>
+
+
+            <div class="comunidade-modal-section">
+
+                <div class="comunidade-modal-section-title">
+                    <i class="material-icons">
+                        admin_panel_settings
+                    </i>
+
+                    <div>
+                        <strong>
+                            Administração
+                        </strong>
+
+                        <span>
+                            Controle quem participa
+                            desta comunidade.
+                        </span>
+                    </div>
+                </div>
+
+
+                <button type="button" class="comunidade-admin-action" onclick="app.abrirGerenciarMembros()">
+                    <span>
+                        <i class="material-icons">
+                            group
+                        </i>
+
+                        Gerenciar membros
+                    </span>
+
+                    <i class="material-icons">
+                        chevron_right
+                    </i>
+                </button>
+
+            </div>
+
+
+            <div class="comunidade-danger-zone">
+
+                <div>
+                    <strong>
+                        Excluir comunidade
+                    </strong>
+
+                    <span>
+                        Esta ação remove permanentemente
+                        a comunidade.
+                    </span>
+                </div>
+
+                <button type="button" class="comunidade-delete-btn" onclick="app.excluirComunidade()">
+                    <i class="material-icons">
+                        delete_outline
+                    </i>
+
+                    Excluir
+                </button>
+
+            </div>
+
+
+            <div class="comunidade-modal-footer">
+
+                <button type="button" class="btn-secondary" onclick="
+                    app.fecharModal(
+                        'gerenciar-comunidade-modal'
+                    )
+                ">
+                    Cancelar
+                </button>
+
+                <button type="button" class="btn-primary" onclick="app.salvarEdicaoComunidade()">
+                    Salvar alterações
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div id="gerenciar-membros-modal" class="modal-overlay">
+        <div class="modal">
+            <h2>Membros da comunidade</h2>
+
+            <div id="lista-membros-comunidade">
+                Carregando...
+            </div>
+
+            <br>
+
+            <button class="btn-secondary" onclick="app.fecharModal('gerenciar-membros-modal')">
+                Fechar
+            </button>
+        </div>
+    </div>
+<div class="modal-overlay" id="editar-perfil-modal">
+    <div class="modal editar-perfil-modal">
+
+        <button
+            type="button"
+            class="modal-close-btn"
+            onclick="app.fecharModal('editar-perfil-modal')"
+            aria-label="Fechar"
+        >
+            <i class="material-icons">close</i>
+        </button>
+
+        <div class="editar-perfil-header">
+            <span class="editar-perfil-kicker">Sua conta</span>
+            <h2>Editar perfil</h2>
+            <p>Atualize como seu perfil aparece para outras pessoas.</p>
+        </div>
+
+        <div class="editar-perfil-foto-area">
+
+            <div class="editar-perfil-avatar">
+                <i class="material-icons">person</i>
+            </div>
+
+            <div class="editar-perfil-foto-info">
+                <strong>Foto de perfil</strong>
+                <span>JPG, PNG ou WEBP · máximo de 5 MB</span>
+
+                <input
+                    type="file"
+                    id="editar-perfil-foto"
+                    accept="image/jpeg,image/png,image/webp"
+                    class="editar-perfil-file-input"
+                >
+
+                <div class="editar-perfil-foto-acoes">
+                    <label
+                        for="editar-perfil-foto"
+                        class="editar-perfil-escolher-foto"
+                    >
+                        <i class="material-icons">photo_camera</i>
+                        Escolher foto
+                    </label>
+
+                    <button
+                        type="button"
+                        class="editar-perfil-alterar-foto"
+                        onclick="app.salvarFotoPerfil()"
+                    >
+                        Alterar
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="editar-perfil-form">
+
+            <div class="editar-perfil-campo">
+                <label for="editar-perfil-nome">Nome</label>
+                <input
+                    type="text"
+                    id="editar-perfil-nome"
+                    placeholder="Seu nome"
+                >
+            </div>
+
+            <div class="editar-perfil-campo">
+                <label for="editar-perfil-username">Username</label>
+
+                <div class="editar-perfil-username">
+                    <span>@</span>
+                    <input
+                        type="text"
+                        id="editar-perfil-username"
+                        placeholder="seuusername"
+                    >
+                </div>
+            </div>
+
+            <div class="editar-perfil-campo">
+                <div class="editar-perfil-label-row">
+                    <label for="editar-perfil-bio">Bio</label>
+                    <span>Máximo de 300 caracteres</span>
+                </div>
+
+                <textarea
+                    id="editar-perfil-bio"
+                    maxlength="300"
+                    placeholder="Conte um pouco sobre você..."
+                ></textarea>
+            </div>
+
+        </div>
+
+        <div class="editar-perfil-footer">
+            <button
+                type="button"
+                class="btn-secondary"
+                onclick="app.fecharModal('editar-perfil-modal')"
+            >
+                Cancelar
+            </button>
+
+            <button
+                type="button"
+                class="btn-primary"
+                onclick="app.salvarPerfil()"
+            >
+                Salvar alterações
+            </button>
+        </div>
+
+    </div>
+</div>
+
+    <div class="modal-overlay" id="gerenciar-evento-modal" role="dialog" aria-modal="true"
+        aria-labelledby="gerenciar-evento-title">
+        <div class="modal evento-modal">
+            <button type="button" class="modal-close-btn" onclick="app.fecharModal('gerenciar-evento-modal')"
+                aria-label="Fechar modal">
+                <i class="material-icons">close</i>
+            </button>
+
+            <div class="modal-header-intro">
+                <span class="modal-kicker"><i class="material-icons">edit_calendar</i> Painel do Organizador</span>
+                <h2 id="gerenciar-evento-title">Gerenciar Evento</h2>
+                <p>Atualize os detalhes do evento, as inscrições e as configurações de acesso.</p>
+            </div>
+
+            <div id="editar-evento-feedback" class="form-feedback" role="alert" aria-live="polite"></div>
+
+            <form id="form-editar-evento" onsubmit="event.preventDefault(); app.salvarEdicaoEvento();">
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <i class="material-icons">info</i> Sobre o Evento
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editar-evento-titulo">Título do evento <span class="required">*</span></label>
+                        <div class="form-input-wrap">
+                            <i class="material-icons">title</i>
+                            <input type="text" id="editar-evento-titulo"
+                                placeholder="Ex: Workshop de Java ou Encontro da Comunidade" required
+                                autocomplete="off">
+                        </div>
+                    </div>
+
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label for="editar-evento-categoria">Categoria <span class="required">*</span></label>
+                            <div class="form-input-wrap">
+                                <i class="material-icons">category</i>
+                                <select id="editar-evento-categoria" required>
+                                    <option value="">Selecione uma categoria</option>
+                                    <option value="Tecnologia">Tecnologia</option>
+                                    <option value="Arte">Arte</option>
+                                    <option value="Música">Música</option>
+                                    <option value="Esportes">Esportes</option>
+                                    <option value="Educação">Educação</option>
+                                    <option value="Networking">Networking</option>
+                                    <option value="Cultura">Cultura</option>
+                                    <option value="Games">Games</option>
+                                    <option value="Gastronomia">Gastronomia</option>
+                                    <option value="Saúde">Saúde</option>
+                                    <option value="Social">Social</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="editar-evento-comunidade">Comunidade vinculada <span
+                                    class="optional">(opcional)</span></label>
+                            <div class="form-input-wrap">
+                                <i class="material-icons">groups</i>
+                                <select id="editar-evento-comunidade">
+                                    <option value="">Nenhuma (Evento aberto / Global)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editar-evento-descricao">Descrição e detalhes <span
+                                class="optional">(opcional)</span></label>
+                        <textarea id="editar-evento-descricao" rows="3"
+                            placeholder="Explique a proposta do evento, programação, requisitos ou recados importantes..."></textarea>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <i class="material-icons">schedule</i> Data e Horários
+                    </div>
+
+                    <div class="form-grid-3">
+                        <div class="form-group">
+                            <label for="editar-evento-data">Data <span class="required">*</span></label>
+                            <div class="form-input-wrap">
+                                <i class="material-icons">calendar_today</i>
+                                <input type="date" id="editar-evento-data" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="editar-evento-horario-inicio">Início <span class="required">*</span></label>
+                            <div class="form-input-wrap">
+                                <i class="material-icons">schedule</i>
+                                <input type="time" id="editar-evento-horario-inicio" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="editar-evento-horario-fim">Término <span class="required">*</span></label>
+                            <div class="form-input-wrap">
+                                <i class="material-icons">schedule</i>
+                                <input type="time" id="editar-evento-horario-fim" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editar-evento-encerramento-inscricoes">Encerramento das inscrições <span
+                                class="optional">(opcional)</span></label>
+                        <div class="form-input-wrap">
+                            <i class="material-icons">event_busy</i>
+                            <input type="datetime-local" id="editar-evento-encerramento-inscricoes">
+                        </div>
+                        <small class="form-hint">Deixe em branco para permitir inscrições até o início do
+                            evento.</small>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <i class="material-icons">place</i> Local e Capacidade
+                    </div>
+
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label for="editar-evento-local">Localização / Link <span class="required">*</span></label>
+                            <div class="form-input-wrap">
+                                <i class="material-icons">place</i>
+                                <input type="text" id="editar-evento-local"
+                                    placeholder="Ex: Auditório Bloco A ou Link do Meet" required autocomplete="off">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="editar-evento-limite">Limite de participantes <span
+                                    class="optional">(opcional)</span></label>
+                            <div class="form-input-wrap">
+                                <i class="material-icons">people</i>
+                                <input type="number" id="editar-evento-limite" min="1" placeholder="Vazio = Sem limite">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <i class="material-icons">settings</i> Configurações
+                    </div>
+
+                    <div class="checkbox-card">
+                        <label class="checkbox-container">
+                            <input type="checkbox" id="editar-evento-checkin">
+                            <span class="checkbox-custom"></span>
+                            <div class="checkbox-text">
+                                <strong>Exigir check-in dos participantes</strong>
+                                <span>A entrada e validação de ingressos serão realizadas pelo aplicativo mobile via QR
+                                    Code.</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="evento-gerenciar-actions">
+                    <button type="submit" class="btn-primary btn-full" id="btn-salvar-edicao-evento">
+                        <i class="material-icons"
+                            style="font-size:18px; vertical-align:middle; margin-right:4px;">save</i> Salvar alterações
+                    </button>
+
+                    <div class="evento-gerenciar-grid-btns">
+                        <button type="button" class="btn-secondary btn-icon-action"
+                            onclick="app.abrirParticipantesEvento()">
+                            <i class="material-icons">people</i> Participantes
+                        </button>
+
+                        <button type="button" class="btn-warning-soft btn-icon-action" onclick="app.cancelarEvento()">
+                            <i class="material-icons">block</i> Cancelar evento
+                        </button>
+
+                        <button type="button" class="btn-danger-soft btn-icon-action" onclick="app.excluirEvento()">
+                            <i class="material-icons">delete</i> Excluir evento
+                        </button>
+                    </div>
+
+                    <button type="button" class="btn-cancel" onclick="app.fecharModal('gerenciar-evento-modal')">
+                        Fechar sem salvar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="participantes-evento-modal" role="dialog" aria-modal="true"
+        aria-labelledby="participantes-modal-title">
+        <div class="modal evento-modal" style="max-width: 520px;">
+            <button type="button" class="modal-close-btn" onclick="app.fecharModal('participantes-evento-modal')"
+                aria-label="Fechar modal">
+                <i class="material-icons">close</i>
+            </button>
+
+            <div class="modal-header-intro">
+                <span class="modal-kicker"><i class="material-icons">people</i> Lista de Presença</span>
+                <h2 id="participantes-modal-title">Participantes do Evento</h2>
+                <p id="participantes-modal-sub">Inscritos e status de check-in.</p>
+            </div>
+
+            <div id="lista-participantes-evento" class="participantes-lista-container">
+                Carregando...
+            </div>
+
+            <div style="margin-top: 20px;">
+                <button type="button" class="btn-full btn-secondary"
+                    onclick="app.fecharModal('participantes-evento-modal')">
+                    Fechar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="compra-ingresso-modal">
+    <div class="modal compra-ingresso-modal">
+
+        <button
+            type="button"
+            class="modal-close-btn"
+            onclick="app.fecharModal('compra-ingresso-modal')"
+            aria-label="Fechar"
+        >
+            <i class="material-icons">close</i>
+        </button>
+
+        <div class="compra-ingresso-header">
+            <div class="compra-ingresso-icon">
+                <i class="material-icons">confirmation_number</i>
+            </div>
+
+            <div>
+                <span class="section-kicker">Ingresso</span>
+                <h2>Confirmar compra</h2>
+                <p>Revise os dados antes de continuar.</p>
+            </div>
+        </div>
+
+        <div class="compra-ingresso-evento">
+            <span>Evento</span>
+            <strong id="compra-ingresso-evento-nome">Evento</strong>
+        </div>
+
+        <div class="compra-ingresso-preco-area">
+            <span>Valor do ingresso</span>
+            <strong id="compra-ingresso-preco">R$ 0,00</strong>
+        </div>
+
+        <div class="compra-ingresso-aviso">
+            <i class="material-icons">info_outline</i>
+
+            <div>
+                <strong>Ambiente de demonstração</strong>
+                <span>
+                    Nenhum pagamento real será processado nesta versão.
+                </span>
+            </div>
+        </div>
+
+        <div class="compra-ingresso-acoes">
+            <button
+                type="button"
+                class="btn-secondary"
+                onclick="app.fecharModal('compra-ingresso-modal')"
+            >
+                Cancelar
+            </button>
+
+            <button
+                type="button"
+                class="btn-primary"
+                onclick="app.confirmarCompraIngresso()"
+            >
+                <i class="material-icons">check</i>
+                Confirmar compra
+            </button>
+        </div>
+
+    </div>
+</div>
+
+    <div
+    class="modal-overlay"
+    id="configuracoes-modal"
+>
+
+    <div class="modal configuracoes-modal">
+
+        <button
+            type="button"
+            class="modal-close-btn"
+            onclick="
+                app.fecharModal(
+                    'configuracoes-modal'
+                )
+            "
+            aria-label="Fechar"
+        >
+            <i class="material-icons">
+                close
+            </i>
+        </button>
+
+
+        <div class="configuracoes-header">
+
+            <span class="section-kicker">
+                Sua conta
+            </span>
+
+            <h2>Configurações</h2>
+
+            <p>
+                Gerencie seus dados e preferências.
+            </p>
+
+        </div>
+
+
+        <div class="configuracoes-lista">
+
+            <button
+                type="button"
+                class="configuracoes-item"
+                onclick="app.abrirEdicaoPerfilPelasConfiguracoes()"
+            >
+
+                <span class="configuracoes-item-icon">
+                    <i class="material-icons">
+                        person_outline
+                    </i>
+                </span>
+
+                <span class="configuracoes-item-info">
+                    <strong>
+                        Editar perfil
+                    </strong>
+
+                    <small>
+                        Nome, username, bio e foto.
+                    </small>
+                </span>
+
+                <i class="material-icons">
+                    chevron_right
+                </i>
+
+            </button>
+
+
+            <button
+                type="button"
+                class="configuracoes-item"
+                onclick="app.abrirMeuPerfilPelasConfiguracoes()"
+            >
+
+                <span class="configuracoes-item-icon">
+                    <i class="material-icons">
+                        account_circle
+                    </i>
+                </span>
+
+                <span class="configuracoes-item-info">
+                    <strong>
+                        Visualizar perfil
+                    </strong>
+
+                    <small>
+                        Veja como seu perfil aparece.
+                    </small>
+                </span>
+
+                <i class="material-icons">
+                    chevron_right
+                </i>
+
+            </button>
+
+        </div>
+
+
+        <div class="configuracoes-note">
+
+            <i class="material-icons">
+                lock_outline
+            </i>
+
+            <span>
+                Alteração de senha poderá ser
+                adicionada futuramente.
+            </span>
+
+        </div>
+
+    </div>
+
+</div>
+
+    <script type="module" src="app.js"></script>
+</body>
+
+</html>

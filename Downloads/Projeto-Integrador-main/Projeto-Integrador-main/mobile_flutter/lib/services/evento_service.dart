@@ -13,7 +13,7 @@ class EventoService {
     // 1. Primeira tentativa: GET /api/eventos
     try {
       final response = await http.get(
-        Uri.parse('$baseUrl/eventos'),
+        Uri.parse('$baseUrl/api/eventos'),
       ).timeout(const Duration(seconds: 8));
 
       if (response.statusCode == 200) {
@@ -39,7 +39,7 @@ class EventoService {
     // 2. Segunda tentativa: GET /api/eventos/buscar (Endpoint utilizado pela Web)
     try {
       final responseBusca = await http.get(
-        Uri.parse('$baseUrl/eventos/buscar?size=100'),
+        Uri.parse('$baseUrl/api/eventos/buscar?size=100'),
       ).timeout(const Duration(seconds: 8));
 
       if (responseBusca.statusCode == 200) {
@@ -67,7 +67,7 @@ class EventoService {
   Future<List<Evento>> listarEventosPorUsuario(int idUsuario) async {
     try {
       final response = await http.get(
-        Uri.parse('$baseUrl/eventos/usuario/$idUsuario'),
+        Uri.parse('$baseUrl/api/eventos/usuario/$idUsuario'),
       ).timeout(const Duration(seconds: 8));
 
       if (response.statusCode == 200) {
@@ -94,7 +94,7 @@ class EventoService {
   Future<Evento?> buscarEventoPorId(int id) async {
     try {
       final response = await http.get(
-        Uri.parse('$baseUrl/eventos/$id'),
+        Uri.parse('$baseUrl/api/eventos/$id'),
       ).timeout(const Duration(seconds: 8));
 
       if (response.statusCode == 200) {
@@ -113,7 +113,7 @@ class EventoService {
   Future<Evento?> criarEvento(Map<String, dynamic> dados) async {
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/eventos'),
+        Uri.parse('$baseUrl/api/eventos'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(dados),
       ).timeout(const Duration(seconds: 10));
@@ -134,7 +134,7 @@ class EventoService {
   Future<bool> participarEvento(int idEvento, int idUsuario) async {
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/eventos/$idEvento/participar/$idUsuario'),
+        Uri.parse('$baseUrl/api/eventos/$idEvento/participar/$idUsuario'),
       ).timeout(const Duration(seconds: 8));
 
       return response.statusCode == 200 || response.statusCode == 201;
@@ -148,7 +148,7 @@ class EventoService {
   Future<bool> sairEvento(int idEvento, int idUsuario) async {
     try {
       final response = await http.delete(
-        Uri.parse('$baseUrl/eventos/$idEvento/participar/$idUsuario'),
+        Uri.parse('$baseUrl/api/eventos/$idEvento/participar/$idUsuario'),
       ).timeout(const Duration(seconds: 8));
 
       return response.statusCode == 200 || response.statusCode == 204;
@@ -162,7 +162,7 @@ class EventoService {
   Future<int> contarParticipantes(int idEvento) async {
     try {
       final response = await http.get(
-        Uri.parse('$baseUrl/eventos/$idEvento/participantes/quantidade'),
+        Uri.parse('$baseUrl/api/eventos/$idEvento/participantes/quantidade'),
       ).timeout(const Duration(seconds: 6));
 
       if (response.statusCode == 200) {
@@ -178,7 +178,7 @@ class EventoService {
   Future<List<int>> listarIdsParticipantes(int idEvento) async {
     try {
       final response = await http.get(
-        Uri.parse('$baseUrl/eventos/$idEvento/participantes'),
+        Uri.parse('$baseUrl/api/eventos/$idEvento/participantes'),
       ).timeout(const Duration(seconds: 6));
 
       if (response.statusCode == 200) {
