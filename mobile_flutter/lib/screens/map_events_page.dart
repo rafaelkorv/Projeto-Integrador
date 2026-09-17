@@ -488,11 +488,44 @@ class _MapEventsPageState extends State<MapEventsPage>
     return GestureDetector(
       onTap: () => _recenterToEvent(index),
       child: SizedBox(
-        width: isSelected ? 90 : 68,
-        height: isSelected ? 100 : 80,
+        width: isSelected ? 160 : 68,
+        height: isSelected ? 130 : 80,
         child: Stack(
           alignment: Alignment.topCenter,
           children: [
+            // Label flutuante com o nome do evento (só no selecionado)
+            if (isSelected)
+              Positioned(
+                top: 0,
+                child: Container(
+                  constraints: const BoxConstraints(maxWidth: 155),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: cor,
+                    borderRadius: BorderRadius.circular(10),
+                    boxShadow: [
+                      BoxShadow(
+                        color: cor.withValues(alpha: 0.5),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Text(
+                    event.titulo,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      height: 1.2,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+
             // Anel de pulso animado (só no selecionado)
             if (isSelected)
               AnimatedBuilder(
@@ -501,7 +534,7 @@ class _MapEventsPageState extends State<MapEventsPage>
                   final scale = 1.0 + _pulseAnimation.value * 0.8;
                   final opacity = 1.0 - _pulseAnimation.value;
                   return Positioned(
-                    top: 0,
+                    top: isSelected ? 30 : 0,
                     child: Transform.scale(
                       scale: scale,
                       child: Container(
@@ -522,7 +555,7 @@ class _MapEventsPageState extends State<MapEventsPage>
 
             // Corpo principal do marcador
             Positioned(
-              top: 0,
+              top: isSelected ? 30 : 0,
               child: isSelected
                   ? AnimatedBuilder(
                       animation: _bounceAnimation,
@@ -537,7 +570,7 @@ class _MapEventsPageState extends State<MapEventsPage>
 
             // Ponta triangular (seta para baixo)
             Positioned(
-              top: isSelected ? 60 : 46,
+              top: isSelected ? 90 : 46,
               child: CustomPaint(
                 size: const Size(16, 10),
                 painter: _TrianglePainter(cor),
@@ -552,7 +585,7 @@ class _MapEventsPageState extends State<MapEventsPage>
                 height: isSelected ? 8 : 6,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(50),
-                  color: Colors.black.withValues(alpha: 0.15),
+                  color: Colors.black.withValues(alpha: 0.25),
                 ),
               ),
             ),
@@ -705,7 +738,7 @@ class _MapEventsPageState extends State<MapEventsPage>
         _categoriaCores[categoriaSelected] ?? const Color(0xFFEA3F74);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: const Color(0xFF1A1A2E),
       body: Stack(
         children: [
           // ─── MAPA ───────────────────────────────────────────────────────
@@ -720,8 +753,7 @@ class _MapEventsPageState extends State<MapEventsPage>
               maxZoom: 19.0,
             ),
             children: [
-              // FIX: CartoDB Voyager tiles — suporte a CORS garantido
-              // tanto em Flutter Web quanto em mobile.
+              // Tiles gratuitos CartoDB Voyager (sem necessidade de API key)
               TileLayer(
                 urlTemplate:
                     'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
@@ -730,7 +762,11 @@ class _MapEventsPageState extends State<MapEventsPage>
                 retinaMode: false,
               ),
 
-              // Marcadores
+              // Overlay escuro sobre os tiles para efeito dark mode
+              // IgnorePointer garante que não intercepta toques do mapa
+              ColoredBox(color: Color(0xCC1A1A2E)),
+
+              // Marcadores (renderizados sobre o overlay, cores vibrantes)
               MarkerLayer(
                 markers: [
                   // Marcador do usuário
@@ -752,8 +788,8 @@ class _MapEventsPageState extends State<MapEventsPage>
                         _coordenadasEventos[event.id] ?? _locaisReferencia[0];
 
                     return Marker(
-                      width: isSelected ? 90 : 68,
-                      height: isSelected ? 100 : 80,
+                      width: isSelected ? 160 : 68,
+                      height: isSelected ? 130 : 80,
                       point: coord,
                       child: _buildEventMarker(index, event, isSelected),
                     );
@@ -770,29 +806,33 @@ class _MapEventsPageState extends State<MapEventsPage>
               left: 0,
               right: 0,
               child: Center(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: const [
-                      BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, 4))
-                    ],
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      SizedBox(
-                        width: 16, height: 16,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2.5,
-                          color: Color(0xFFEA3F74),
-                        ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: BackdropFilter(
+                    filter: ui.ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1E1E2E).withValues(alpha: 0.7),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
                       ),
-                      SizedBox(width: 10),
-                      Text('Carregando eventos...',
-                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF334155))),
-                    ],
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          SizedBox(
+                            width: 16, height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              color: Color(0xFFEA3F74),
+                            ),
+                          ),
+                          SizedBox(width: 10),
+                          Text('Carregando eventos...',
+                              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white)),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -813,38 +853,43 @@ class _MapEventsPageState extends State<MapEventsPage>
                       cat == 'Todos' ? const Color(0xFFEA3F74) : (_categoriaCores[cat] ?? const Color(0xFFEA3F74));
                   return Padding(
                     padding: const EdgeInsets.only(right: 8),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      child: FilterChip(
-                        selected: isSelected,
-                        label: Text(cat),
-                        avatar: cat != 'Todos'
-                            ? Icon(
-                                _categoriaIcones[cat],
-                                size: 14,
-                                color: isSelected ? Colors.white : corChip,
-                              )
-                            : null,
-                        labelStyle: TextStyle(
-                          color:
-                              isSelected ? Colors.white : const Color(0xFF334155),
-                          fontWeight:
-                              isSelected ? FontWeight.w700 : FontWeight.w500,
-                          fontSize: 12,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(20),
+                      child: BackdropFilter(
+                        filter: ui.ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          child: FilterChip(
+                            selected: isSelected,
+                            label: Text(cat),
+                            avatar: cat != 'Todos'
+                                ? Icon(
+                                    _categoriaIcones[cat],
+                                    size: 14,
+                                    color: isSelected ? Colors.white : corChip,
+                                  )
+                                : null,
+                            labelStyle: TextStyle(
+                              color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.9),
+                              fontWeight:
+                                  isSelected ? FontWeight.w700 : FontWeight.w500,
+                              fontSize: 12,
+                            ),
+                            backgroundColor: const Color(0xFF1E1E2E).withValues(alpha: 0.6),
+                            selectedColor: corChip,
+                            elevation: 0,
+                            shadowColor: Colors.transparent,
+                            side: BorderSide(
+                              color: isSelected ? corChip : Colors.white.withValues(alpha: 0.2),
+                            ),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20)),
+                            onSelected: (val) {
+                              setState(() => _selectedCategory = cat);
+                              _aplicarFiltroCategoria();
+                            },
+                          ),
                         ),
-                        backgroundColor: Colors.white,
-                        selectedColor: corChip,
-                        elevation: 4,
-                        shadowColor: Colors.black12,
-                        side: BorderSide(
-                          color: isSelected ? corChip : const Color(0xFFE2E8F0),
-                        ),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20)),
-                        onSelected: (val) {
-                          setState(() => _selectedCategory = cat);
-                          _aplicarFiltroCategoria();
-                        },
                       ),
                     ),
                   );
@@ -859,45 +904,45 @@ class _MapEventsPageState extends State<MapEventsPage>
               top: 70,
               left: 16,
               right: 16,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.08),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4)),
-                  ],
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.location_off_rounded,
-                        color: Color(0xFFEA3F74), size: 20),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        _statusPermissaoMensagem!,
-                        style: const TextStyle(
-                            fontSize: 12,
-                            color: Color(0xFF334155),
-                            fontWeight: FontWeight.w600),
-                      ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: BackdropFilter(
+                  filter: ui.ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1E1E2E).withValues(alpha: 0.7),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
                     ),
-                    TextButton(
-                      onPressed: () =>
-                          _inicializarLocalizacao(forcarDialogo: true),
-                      style: TextButton.styleFrom(
-                        foregroundColor: const Color(0xFFEA3F74),
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                      ),
-                      child: const Text('Ativar',
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 12)),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.location_off_rounded,
+                            color: Color(0xFFEA3F74), size: 20),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            _statusPermissaoMensagem!,
+                            style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.white.withValues(alpha: 0.9),
+                                fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () =>
+                              _inicializarLocalizacao(forcarDialogo: true),
+                          style: TextButton.styleFrom(
+                            foregroundColor: const Color(0xFFEA3F74),
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                          ),
+                          child: const Text('Ativar',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 12)),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -954,35 +999,45 @@ class _MapEventsPageState extends State<MapEventsPage>
             Positioned(
               left: 14,
               top: 130,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(14),
-                  boxShadow: const [
-                    BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 3))
-                  ],
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        color: corCategoria,
-                        shape: BoxShape.circle,
-                      ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(14),
+                child: BackdropFilter(
+                  filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1E1E2E).withValues(alpha: 0.6),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
                     ),
-                    const SizedBox(width: 6),
-                    Text(
-                      '${_eventosFiltrados.length} evento${_eventosFiltrados.length != 1 ? 's' : ''}',
-                      style: const TextStyle(
-                          color: Color(0xFF0F172A),
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: corCategoria,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: corCategoria.withValues(alpha: 0.6),
+                                blurRadius: 4,
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          '${_eventosFiltrados.length} evento${_eventosFiltrados.length != 1 ? 's' : ''}',
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -1015,21 +1070,26 @@ class _MapEventsPageState extends State<MapEventsPage>
     required String tooltip,
     required VoidCallback onTap,
   }) {
-    return Material(
-      elevation: 4,
-      shadowColor: Colors.black26,
+    return ClipRRect(
       borderRadius: BorderRadius.circular(14),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
-        child: Container(
-          width: 42,
-          height: 42,
-          decoration: BoxDecoration(
-            color: Colors.white,
+      child: BackdropFilter(
+        filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
             borderRadius: BorderRadius.circular(14),
+            child: Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E1E2E).withValues(alpha: 0.6),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+              ),
+              child: Icon(icon, color: color == const Color(0xFF0F172A) ? Colors.white.withValues(alpha: 0.9) : color, size: 20),
+            ),
           ),
-          child: Icon(icon, color: color, size: 20),
         ),
       ),
     );
@@ -1044,270 +1104,278 @@ class _MapEventsPageState extends State<MapEventsPage>
     Color corCategoria,
     String distancia,
   ) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: corCategoria.withValues(alpha: 0.15),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-          const BoxShadow(
-            color: Colors.black12,
-            blurRadius: 10,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Barra colorida no topo do card
-          Container(
-            height: 4,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [corCategoria, corCategoria.withValues(alpha: 0.5)],
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(24),
+      child: BackdropFilter(
+        filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+        child: Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFF1E1E2E).withValues(alpha: 0.75),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+            boxShadow: [
+              BoxShadow(
+                color: corCategoria.withValues(alpha: 0.2),
+                blurRadius: 24,
+                offset: const Offset(0, 8),
               ),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-            ),
+            ],
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(18, 14, 18, 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header: Categoria + Público/Privado + Distância + Navegação
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Barra colorida gradiente no topo do card
+              Container(
+                height: 3,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [corCategoria, corCategoria.withValues(alpha: 0.3), Colors.transparent],
+                  ),
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(18, 14, 18, 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Header: Categoria + Público/Privado + Distância + Navegação
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: corCategoria.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                        Flexible(
                           child: Row(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(
-                                _categoriaIcones[categoria] ?? Icons.star_rounded,
-                                size: 12,
-                                color: corCategoria,
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: corCategoria.withValues(alpha: 0.2),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: corCategoria.withValues(alpha: 0.4)),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      _categoriaIcones[categoria] ?? Icons.star_rounded,
+                                      size: 12,
+                                      color: corCategoria,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      categoria,
+                                      style: TextStyle(
+                                        color: corCategoria,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
-                              const SizedBox(width: 4),
-                              Text(
-                                categoria,
-                                style: TextStyle(
-                                  color: corCategoria,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: evento.ehPublico
+                                      ? const Color(0xFF10B981).withValues(alpha: 0.15)
+                                      : Colors.white.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  evento.ehPublico ? 'Público' : 'Comunidade',
+                                  style: TextStyle(
+                                    color: evento.ehPublico
+                                        ? const Color(0xFF34D399)
+                                        : Colors.white.withValues(alpha: 0.7),
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        const SizedBox(width: 6),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: evento.ehPublico
-                                ? const Color(0xFFECFDF5)
-                                : const Color(0xFFF1F5F9),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            evento.ehPublico ? 'Público' : 'Comunidade',
-                            style: TextStyle(
-                              color: evento.ehPublico
-                                  ? const Color(0xFF059669)
-                                  : const Color(0xFF64748B),
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.near_me_rounded,
+                                size: 13, color: corCategoria),
+                            const SizedBox(width: 3),
+                            Text(
+                              distancia,
+                              style: TextStyle(
+                                color: corCategoria,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
                             ),
+                            const SizedBox(width: 10),
+                            GestureDetector(
+                              onTap: _selectedEventIndex > 0
+                                  ? () => _recenterToEvent(_selectedEventIndex - 1)
+                                  : null,
+                              child: Icon(Icons.chevron_left_rounded,
+                                  color: _selectedEventIndex > 0
+                                      ? Colors.white.withValues(alpha: 0.9)
+                                      : Colors.white.withValues(alpha: 0.2),
+                                  size: 22),
+                            ),
+                            Text(
+                              '${_selectedEventIndex + 1}/${_eventosFiltrados.length}',
+                              style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.6),
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold),
+                            ),
+                            GestureDetector(
+                              onTap: _selectedEventIndex <
+                                      _eventosFiltrados.length - 1
+                                  ? () => _recenterToEvent(_selectedEventIndex + 1)
+                                  : null,
+                              child: Icon(Icons.chevron_right_rounded,
+                                  color: _selectedEventIndex <
+                                          _eventosFiltrados.length - 1
+                                      ? Colors.white.withValues(alpha: 0.9)
+                                      : Colors.white.withValues(alpha: 0.2),
+                                  size: 22),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+
+                    // Título
+                    Text(
+                      evento.titulo,
+                      style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 6),
+
+                    // Local
+                    Row(
+                      children: [
+                        Icon(Icons.location_on_rounded,
+                            size: 15, color: corCategoria),
+                        const SizedBox(width: 5),
+                        Expanded(
+                          child: Text(
+                            evento.localEvento,
+                            style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.7),
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],
                     ),
+                    const SizedBox(height: 5),
+
+                    // Data e participantes
                     Row(
                       children: [
-                        Icon(Icons.near_me_rounded,
-                            size: 13, color: corCategoria),
-                        const SizedBox(width: 3),
+                        Icon(Icons.access_time_rounded,
+                            size: 13, color: Colors.white.withValues(alpha: 0.4)),
+                        const SizedBox(width: 4),
                         Text(
-                          distancia,
+                          '${evento.dataFormatada} • ${evento.horarioFormatado}',
                           style: TextStyle(
-                            color: corCategoria,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
+                              color: Colors.white.withValues(alpha: 0.6), fontSize: 12),
+                        ),
+                        const SizedBox(width: 12),
+                        Icon(Icons.people_outline_rounded,
+                            size: 13, color: Colors.white.withValues(alpha: 0.4)),
+                        const SizedBox(width: 4),
+                        Text(
+                          '$participantes inscritos',
+                          style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.6), fontSize: 12),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+
+                    // Ações
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () => _snack(
+                                'Traçando rota para ${evento.localEvento}...',
+                                cor: const Color(0xFF0F172A)),
+                            icon: const Icon(Icons.directions_rounded, size: 16),
+                            label: const Text('Como Chegar'),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.white.withValues(alpha: 0.9),
+                              side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12)),
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              textStyle: const TextStyle(
+                                  fontSize: 12, fontWeight: FontWeight.w600),
+                            ),
                           ),
                         ),
                         const SizedBox(width: 10),
-                        GestureDetector(
-                          onTap: _selectedEventIndex > 0
-                              ? () => _recenterToEvent(_selectedEventIndex - 1)
-                              : null,
-                          child: Icon(Icons.chevron_left_rounded,
-                              color: _selectedEventIndex > 0
-                                  ? const Color(0xFF0F172A)
-                                  : Colors.grey.shade300,
-                              size: 22),
-                        ),
-                        Text(
-                          '${_selectedEventIndex + 1}/${_eventosFiltrados.length}',
-                          style: const TextStyle(
-                              color: Color(0xFF64748B),
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold),
-                        ),
-                        GestureDetector(
-                          onTap: _selectedEventIndex <
-                                  _eventosFiltrados.length - 1
-                              ? () => _recenterToEvent(_selectedEventIndex + 1)
-                              : null,
-                          child: Icon(Icons.chevron_right_rounded,
-                              color: _selectedEventIndex <
-                                      _eventosFiltrados.length - 1
-                                  ? const Color(0xFF0F172A)
-                                  : Colors.grey.shade300,
-                              size: 22),
+                        Expanded(
+                          child: isInscrito
+                              ? OutlinedButton.icon(
+                                  onPressed: () => _toggleParticipacao(evento),
+                                  icon: const Icon(Icons.check_circle_rounded,
+                                      size: 16, color: Color(0xFF34D399)),
+                                  label: const Text('Inscrito (Sair)'),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: const Color(0xFF34D399),
+                                    side: const BorderSide(
+                                        color: Color(0xFF34D399)),
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12)),
+                                    padding:
+                                        const EdgeInsets.symmetric(vertical: 10),
+                                    textStyle: const TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600),
+                                  ),
+                                )
+                              : ElevatedButton.icon(
+                                  onPressed: () => _toggleParticipacao(evento),
+                                  icon: const Icon(
+                                      Icons.event_available_rounded,
+                                      size: 16),
+                                  label: const Text('Participar'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: corCategoria,
+                                    foregroundColor: Colors.white,
+                                    elevation: 0,
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12)),
+                                    padding:
+                                        const EdgeInsets.symmetric(vertical: 10),
+                                    textStyle: const TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600),
+                                  ),
+                                ),
                         ),
                       ],
                     ),
                   ],
                 ),
-                const SizedBox(height: 10),
-
-                // Título
-                Text(
-                  evento.titulo,
-                  style: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF0F172A),
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 6),
-
-                // Local
-                Row(
-                  children: [
-                    Icon(Icons.location_on_rounded,
-                        size: 15, color: corCategoria),
-                    const SizedBox(width: 5),
-                    Expanded(
-                      child: Text(
-                        evento.localEvento,
-                        style: const TextStyle(
-                            color: Color(0xFF475569),
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 5),
-
-                // Data e participantes
-                Row(
-                  children: [
-                    const Icon(Icons.access_time_rounded,
-                        size: 13, color: Color(0xFF94A3B8)),
-                    const SizedBox(width: 4),
-                    Text(
-                      '${evento.dataFormatada} • ${evento.horarioFormatado}',
-                      style: const TextStyle(
-                          color: Color(0xFF64748B), fontSize: 12),
-                    ),
-                    const SizedBox(width: 12),
-                    const Icon(Icons.people_outline_rounded,
-                        size: 13, color: Color(0xFF94A3B8)),
-                    const SizedBox(width: 4),
-                    Text(
-                      '$participantes inscritos',
-                      style: const TextStyle(
-                          color: Color(0xFF64748B), fontSize: 12),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-
-                // Ações
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () => _snack(
-                            'Traçando rota para ${evento.localEvento}...',
-                            cor: const Color(0xFF0F172A)),
-                        icon: const Icon(Icons.directions_rounded, size: 16),
-                        label: const Text('Como Chegar'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: const Color(0xFF0F172A),
-                          side: const BorderSide(color: Color(0xFFCBD5E1)),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12)),
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          textStyle: const TextStyle(
-                              fontSize: 12, fontWeight: FontWeight.w600),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: isInscrito
-                          ? OutlinedButton.icon(
-                              onPressed: () => _toggleParticipacao(evento),
-                              icon: const Icon(Icons.check_circle_rounded,
-                                  size: 16, color: Color(0xFF10B981)),
-                              label: const Text('Inscrito (Sair)'),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: const Color(0xFF10B981),
-                                side: const BorderSide(
-                                    color: Color(0xFF10B981)),
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12)),
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 10),
-                                textStyle: const TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600),
-                              ),
-                            )
-                          : ElevatedButton.icon(
-                              onPressed: () => _toggleParticipacao(evento),
-                              icon: const Icon(
-                                  Icons.event_available_rounded,
-                                  size: 16),
-                              label: const Text('Participar'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: corCategoria,
-                                foregroundColor: Colors.white,
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12)),
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 10),
-                                textStyle: const TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600),
-                              ),
-                            ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

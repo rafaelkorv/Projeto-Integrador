@@ -22,9 +22,11 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int paginaAtual = 0;
+  // Mobile: inicia no Mapa (índice 5). Desktop ajusta para Feed no build.
+  int paginaAtual = 5;
   int? _eventoNotificacaoId;
   StreamSubscription<String>? _notificationSub;
+  bool _initialPageSet = false;
 
   final titles = const [
     "Início",
@@ -135,6 +137,16 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final bool isDesktop = size.width > 920;
+
+    // No desktop, garante que a página inicial seja Feed (não Mapa)
+    if (!_initialPageSet) {
+      _initialPageSet = true;
+      if (isDesktop && paginaAtual == 5 && _eventoNotificacaoId == null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) setState(() => paginaAtual = 0);
+        });
+      }
+    }
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FF),
@@ -332,7 +344,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           child: Row(
             children: [
-              _buildNavTabItem(0, Icons.dynamic_feed_rounded, "Feed", navIndex == 0),
+              _buildNavTabItem(0, Icons.explore_rounded, "Explorar", navIndex == 0, isPrimary: true),
               _buildNavTabItem(1, Icons.search_rounded, "Buscar", navIndex == 1),
               _buildNavTabItem(2, Icons.event_rounded, "Eventos", navIndex == 2),
               _buildNavTabItem(3, Icons.groups_rounded, "Grupos", navIndex == 3),
@@ -344,7 +356,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildNavTabItem(int index, IconData icon, String label, bool isActive) {
+  Widget _buildNavTabItem(int index, IconData icon, String label, bool isActive, {bool isPrimary = false}) {
     return Expanded(
       child: InkWell(
         onTap: () {
@@ -359,11 +371,13 @@ class _HomeScreenState extends State<HomeScreen> {
             color: isActive ? Colors.white : Colors.transparent,
             borderRadius: BorderRadius.circular(14),
             boxShadow: isActive
-                ? const [
+                ? [
                     BoxShadow(
-                      color: Color.fromRGBO(234, 63, 116, 0.16),
-                      blurRadius: 14,
-                      offset: Offset(0, 5),
+                      color: isPrimary
+                          ? const Color.fromRGBO(234, 63, 116, 0.25)
+                          : const Color.fromRGBO(234, 63, 116, 0.16),
+                      blurRadius: isPrimary ? 18 : 14,
+                      offset: const Offset(0, 5),
                     ),
                   ]
                 : null,
@@ -371,11 +385,35 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                icon,
-                color: isActive ? const Color(0xFFEA3F74) : const Color(0xFF6B7280),
-                size: 22,
-              ),
+              // Ícone com badge de destaque para o item primário
+              if (isPrimary && isActive)
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFEA3F74), Color(0xFFFF6B9D)],
+                    ),
+                    borderRadius: BorderRadius.circular(10),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color.fromRGBO(234, 63, 116, 0.3),
+                        blurRadius: 8,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    icon,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                )
+              else
+                Icon(
+                  icon,
+                  color: isActive ? const Color(0xFFEA3F74) : const Color(0xFF6B7280),
+                  size: 22,
+                ),
               const SizedBox(height: 3),
               Text(
                 label,
@@ -394,8 +432,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   int _mapPaginaParaBottomNav(int page) {
     switch (page) {
-      case 0:
-        return 0; // Feed
+      case 5:
+        return 0; // Explorar (Mapa) — primeiro item
       case 1:
         return 1; // Pesquisar
       case 2:
@@ -405,14 +443,14 @@ class _HomeScreenState extends State<HomeScreen> {
       case 4:
         return 4; // Perfil / Conta
       default:
-        return 0;
+        return 0; // Qualquer outra (Feed, etc.) → Explorar
     }
   }
 
   int _mapBottomNavParaPagina(int navIndex) {
     switch (navIndex) {
       case 0:
-        return 0; // Feed
+        return 5; // Explorar → MapEventsPage
       case 1:
         return 1; // Pesquisar
       case 2:
@@ -422,7 +460,7 @@ class _HomeScreenState extends State<HomeScreen> {
       case 4:
         return 4; // Perfil / Welcome
       default:
-        return 0;
+        return 5; // Default → Mapa
     }
   }
 

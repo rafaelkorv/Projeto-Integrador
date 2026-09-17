@@ -1,8 +1,9 @@
 class ApiService {
-  static const String baseUrl = 'http://localhost:8080';
+  //static const String baseUrl = 'http://localhost:8080';
 
   //PC do COTIL:
-  //static const String baseUrl = 'http://143.106.241.xx:8080';
+
+  static const String baseUrl = 'http://143.106.241.62:8080';
 
   //API Render:
   //static const String baseUrl = 'https://projeto-integrador-m4jn.onrender.com';
