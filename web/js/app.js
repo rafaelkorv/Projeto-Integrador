@@ -6539,7 +6539,7 @@ ${ApiService.getIdUsuarioLogado() ? `
         if (!evento) {
             container.innerHTML = `
             <div class="evento-destaque-vazio">
-                Nenhum evento encontrado com esses filtros.
+                Nenhum evento futuro disponível no momento.
             </div>
         `;
             return;
@@ -6685,13 +6685,29 @@ ${ApiService.getIdUsuarioLogado() ? `
                     ? resultado
                     : (resultado.content || []);
 
-            if (!eventos.length) {
+            const agora = new Date();
+            const eventosAtivos = eventos.filter(evento => {
+                const situacaoTemporal = evento.situacaoTemporal;
+                if (situacaoTemporal === 'ENCERRADO' || situacaoTemporal === 'CANCELADO'
+                    || evento.status === 'CANCELADO'
+                    || !evento.dataEvento || !evento.horarioFim) {
+                    return false;
+                }
+
+                const fimEvento = new Date(
+                    `${evento.dataEvento}T${evento.horarioFim}`
+                );
+
+                return !Number.isNaN(fimEvento.getTime()) && fimEvento > agora;
+            });
+
+            if (!eventosAtivos.length) {
                 this.renderizarEventoDestaque(null);
                 return;
             }
 
             const eventoMaisPopular =
-                [...eventos].sort((a, b) => {
+                [...eventosAtivos].sort((a, b) => {
                     const participantesA =
                         Number(a.quantidadeParticipantes || 0);
 
