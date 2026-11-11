@@ -365,6 +365,7 @@ export class ApiService {
         status = null,
         categoria = null,
         comunidadeId = null,
+        pago = null,
         dataInicio = null,
         dataFim = null,
         lat = null,       // <--- Novo: Latitude do usuário
@@ -380,6 +381,7 @@ export class ApiService {
         if (status) params.append("status", status);
         if (categoria) params.append("categoria", categoria);
         if (comunidadeId) params.append("comunidadeId", comunidadeId);
+        if (pago !== null) params.append("pago", String(pago));
         if (dataInicio) params.append("dataInicio", dataInicio);
         if (dataFim) params.append("dataFim", dataFim);
 

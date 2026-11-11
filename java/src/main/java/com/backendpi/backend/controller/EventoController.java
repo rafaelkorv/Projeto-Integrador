@@ -143,6 +143,7 @@ public class EventoController {
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String categoria,
             @RequestParam(required = false) Long comunidadeId,
+            @RequestParam(required = false) Boolean pago,
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicio,
             @RequestParam(required = false)
@@ -158,6 +159,7 @@ public class EventoController {
                 status,
                 categoria,
                 comunidadeId,
+                pago,
                 dataInicio,
                 dataFim,
                 lat,

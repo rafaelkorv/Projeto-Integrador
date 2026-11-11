@@ -28,6 +28,11 @@ public interface EventoRepository extends JpaRepository<Evento, Long> {
             OR LOWER(TRIM(e.categoria)) = LOWER(TRIM(:categoria))
         )
         AND (:comunidadeId IS NULL OR e.comunidadeId = :comunidadeId)
+        AND (
+            :pago IS NULL
+            OR (:pago = TRUE AND e.precoIngresso > 0)
+            OR (:pago = FALSE AND (e.precoIngresso IS NULL OR e.precoIngresso <= 0))
+        )
         AND (:dataInicio IS NULL OR e.dataEvento >= :dataInicio)
         AND (:dataFim IS NULL OR e.dataEvento <= :dataFim)
         AND (
@@ -71,6 +76,7 @@ public interface EventoRepository extends JpaRepository<Evento, Long> {
             @Param("status") String status,
             @Param("categoria") String categoria,
             @Param("comunidadeId") Long comunidadeId,
+            @Param("pago") Boolean pago,
             @Param("dataInicio") LocalDate dataInicio,
             @Param("dataFim") LocalDate dataFim,
             @Param("lat") Double lat,

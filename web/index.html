@@ -251,8 +251,10 @@
                             <option value="personalizado">Intervalo personalizado</option>
                         </select>
 
-                        <select id="filtro-evento-comunidade" onchange="app.filtrarEventos()">
-                            <option value="">Todas as comunidades</option>
+                        <select id="filtro-evento-preco" onchange="app.filtrarEventos()">
+                            <option value="">Todos os preços</option>
+                            <option value="gratuito">Gratuitos</option>
+                            <option value="pago">Pagos</option>
                         </select>
 
                         <select id="filtro-evento-categoria" onchange="app.filtrarEventos()">
@@ -1788,7 +1790,7 @@
 </div>
 
     <!-- type="module" permite importar ApiService; servir esta página por HTTP evita bloqueios de módulos em file://. -->
-    <script type="module" src="js/app.js?v=chat-avatar-1"></script>
+    <script type="module" src="js/app.js?v=event-price-filter-1"></script>
 </body>
 
 </html>

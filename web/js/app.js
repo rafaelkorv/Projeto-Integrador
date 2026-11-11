@@ -1,4 +1,4 @@
-import { ApiService } from './api_service.js?v=post-images-1';
+import { ApiService } from './api_service.js?v=event-price-filter-1';
 
 // Controlador central da interface: mantém o estado em memória, atualiza o DOM e delega o acesso ao servidor ao ApiService.
 class AppController {
@@ -11,7 +11,6 @@ class AppController {
         this.imagensPostSelecionadas = [];
         this.previewFotoPerfilUrl = null;
         this.comunidadesMap = {}; // Guarda id -> nome da comunidade
-        this.carregarFiltroComunidadesEventos();
         this.listaComunidades = [];
         this.comentariosPorPost = {};
         this.posts = [];
@@ -40,7 +39,7 @@ class AppController {
         this.filtrosEventos = {
             texto: null,
             categoria: null,
-            comunidadeId: null,
+            pago: null,
             dataInicio: null,
             dataFim: null
         };
@@ -1314,7 +1313,6 @@ class AppController {
             comunidades.forEach(c =>
                 this.comunidadesMap[c.idComunidade || c.id] = c.nome
             );
-            this.carregarFiltroComunidadesEventos();
 
             this.comentariosPorPost = {};
             comentarios.forEach(c => {
@@ -5232,8 +5230,8 @@ ${ApiService.getIdUsuarioLogado() ? `
             document.getElementById('filtro-evento-texto')
                 .value.trim();
 
-        const comunidadeId =
-            document.getElementById('filtro-evento-comunidade')
+        const preco =
+            document.getElementById('filtro-evento-preco')
                 .value;
 
         const categoria =
@@ -5333,10 +5331,7 @@ ${ApiService.getIdUsuarioLogado() ? `
         this.filtrosEventos = {
             texto: texto || null,
 
-            comunidadeId:
-                comunidadeId
-                    ? parseInt(comunidadeId)
-                    : null,
+            pago: preco ? preco === 'pago' : null,
 
             categoria:
                 categoria || null,
@@ -5352,36 +5347,6 @@ ${ApiService.getIdUsuarioLogado() ? `
 
         if (this.visaoEventos === 'meus') await this.carregarMeusEventos();
         else await this.carregarEventos();
-    }
-
-    carregarFiltroComunidadesEventos() {
-
-        const select =
-            document.getElementById(
-                'filtro-evento-comunidade'
-            );
-
-        if (!select) {
-            return;
-        }
-
-        select.innerHTML =
-            '<option value="">Todas as comunidades</option>';
-
-        Object.entries(this.comunidadesMap)
-            .sort((a, b) =>
-                a[1].localeCompare(b[1])
-            )
-            .forEach(([id, nome]) => {
-
-                const option =
-                    document.createElement('option');
-
-                option.value = id;
-                option.textContent = nome;
-
-                select.appendChild(option);
-            });
     }
 
     buscarEventosComDebounce() {
