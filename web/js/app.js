@@ -39,7 +39,6 @@ class AppController {
         this.usuariosSeguidos = new Set();
         this.filtrosEventos = {
             texto: null,
-            status: null,
             categoria: null,
             comunidadeId: null,
             dataInicio: null,
@@ -5237,10 +5236,6 @@ ${ApiService.getIdUsuarioLogado() ? `
             document.getElementById('filtro-evento-comunidade')
                 .value;
 
-        const status =
-            document.getElementById('filtro-evento-status')
-                .value;
-
         const categoria =
             document.getElementById('filtro-evento-categoria')
                 .value;
@@ -5342,9 +5337,6 @@ ${ApiService.getIdUsuarioLogado() ? `
                 comunidadeId
                     ? parseInt(comunidadeId)
                     : null,
-
-            status:
-                status || null,
 
             categoria:
                 categoria || null,

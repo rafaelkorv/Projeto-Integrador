@@ -8096,11 +8096,32 @@ button:disabled {
     font-size: 16px;
 }
 
+.btn-localizacao-filtro {
+    background: #fff;
+    color: var(--text-muted);
+    border: 1px solid var(--border-color);
+    border-radius: 9px;
+    padding: 0 12px;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.btn-localizacao-filtro:hover {
+    background: var(--bg-light);
+    border-color: var(--primary-blue);
+    color: var(--primary-blue);
+}
+
 .btn-localizacao-filtro.ativo {
-    background: #ecfdf5 !important;
-    color: #059669 !important;
-    border-color: #10b981 !important;
-    font-weight: 700;
+    background: var(--bg-light);
+    color: var(--primary-blue);
+    border-color: var(--primary-blue);
+}
+
+.btn-localizacao-filtro .material-icons {
+    font-size: 18px;
 }
 
 .badge-distancia {

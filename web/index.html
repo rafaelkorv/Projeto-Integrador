@@ -255,11 +255,6 @@
                             <option value="">Todas as comunidades</option>
                         </select>
 
-                        <select id="filtro-evento-status" onchange="app.filtrarEventos()">
-                            <option value="">Todos os status</option>
-                            <option value="AGENDADO">Agendados</option>
-                            <option value="CANCELADO">Cancelados</option>
-                        </select>
                         <select id="filtro-evento-categoria" onchange="app.filtrarEventos()">
                             <option value="">Todas as categorias</option>
                             <option value="Tecnologia">Tecnologia</option>
@@ -277,7 +272,7 @@
                         </select>
 
                         <div class="filtro-localizacao-wrap" style="display: flex; gap: 8px; align-items: center;">
-                            <button id="btn-localizacao-filtro" class="btn-secondary" onclick="app.alternarFiltroProximidade()" style="white-space: nowrap; height: 38px; display: flex; align-items: center; gap: 5px;">
+                            <button id="btn-localizacao-filtro" class="btn-localizacao-filtro" onclick="app.alternarFiltroProximidade()" style="white-space: nowrap; height: 38px; display: flex; align-items: center; gap: 5px;">
                                 <i class="material-icons" style="font-size: 18px;">my_location</i>
                                 Perto de mim
                             </button>
