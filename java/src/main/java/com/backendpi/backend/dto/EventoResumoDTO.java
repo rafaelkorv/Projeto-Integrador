@@ -24,6 +24,7 @@ public class EventoResumoDTO {
     private LocalDateTime encerramentoInscricoes;
     private Long quantidadeParticipantes;
     private BigDecimal precoIngresso;
+    private Boolean taxaRepassadaComprador;
     private Double latitude;
     private Double longitude;
 
@@ -45,6 +46,7 @@ public class EventoResumoDTO {
             String status,
             LocalDateTime encerramentoInscricoes,
             Long quantidadeParticipantes,
+            Boolean taxaRepassadaComprador,
             Double latitude,
             Double longitude) {
 
@@ -65,6 +67,7 @@ public class EventoResumoDTO {
         this.status = status;
         this.encerramentoInscricoes = encerramentoInscricoes;
         this.quantidadeParticipantes = quantidadeParticipantes;
+        this.taxaRepassadaComprador = taxaRepassadaComprador;
         this.latitude = latitude;
         this.longitude = longitude;
 
@@ -171,6 +174,14 @@ public class EventoResumoDTO {
 
     public void setPrecoIngresso(BigDecimal precoIngresso) {
         this.precoIngresso = precoIngresso;
+    }
+
+    public Boolean getTaxaRepassadaComprador() {
+        return taxaRepassadaComprador;
+    }
+
+    public void setTaxaRepassadaComprador(Boolean taxaRepassadaComprador) {
+        this.taxaRepassadaComprador = taxaRepassadaComprador;
     }
 
     public Double getLatitude() {

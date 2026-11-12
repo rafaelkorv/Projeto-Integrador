@@ -232,6 +232,18 @@ export class ApiService {
         });
     }
 
+    static async calcularPagamento(idEvento) {
+        const response = await fetch(
+            `${this.API_URL}/api/pagamentos/eventos/${idEvento}/calcular`
+        );
+
+        if (!response.ok) {
+            throw new Error('Erro ao calcular o valor do pagamento');
+        }
+
+        return await response.json();
+    }
+
     static async atualizarComunidade(idComunidade, idUsuario, nome, descricao, categoria, cor) {
         return await fetch(`${this.API_URL}/comunidades/${idComunidade}/usuario/${idUsuario}`, {
             method: "PUT",

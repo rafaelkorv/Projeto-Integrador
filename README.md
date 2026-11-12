@@ -47,6 +47,7 @@ O backend utiliza MySQL. Configure o acesso ao banco no arquivo:
 `java/src/main/resources/application.properties`
 
 Antes de iniciar o backend, confirme que o serviço MySQL está ativo e que o banco configurado existe. Não há um script `database/schema.sql` neste repositório.
+Antes de iniciar uma versão com a opção de repasse da taxa do ingresso, aplique manualmente a migração `java/database/migrations/20261111_add_taxa_repassada_comprador.sql` no banco configurado.
 
 ### 2. Backend (Java)
 Abra um terminal na pasta raiz do repositório e execute:

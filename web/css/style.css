@@ -1867,6 +1867,13 @@ textarea:focus,
     box-shadow: 0 22px 55px rgba(43, 23, 32, 0.2);
 }
 
+.modal-confirmacao-acoes {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 24px;
+}
+
 .auth-modal {
     position: relative;
     max-width: 510px;
@@ -7903,7 +7910,7 @@ button:disabled {
 }
 
 .compra-ingresso-evento,
-.compra-ingresso-preco-area {
+.compra-ingresso-resumo {
     display: flex;
     flex-direction: column;
     gap: 6px;
@@ -7912,7 +7919,7 @@ button:disabled {
 }
 
 .compra-ingresso-evento span,
-.compra-ingresso-preco-area span {
+.compra-ingresso-linha span {
     color: var(--text-muted);
     font-size: 12px;
     font-weight: 700;
@@ -7923,8 +7930,37 @@ button:disabled {
     font-size: 16px;
 }
 
-.compra-ingresso-preco-area strong {
-    font-size: 28px;
+.compra-ingresso-resumo {
+    gap: 0;
+}
+
+.compra-ingresso-linha {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+}
+
+.compra-ingresso-linha strong {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.compra-ingresso-total {
+    margin-top: 4px;
+    border-top: 1px solid var(--border-color);
+    font-size: 16px;
+}
+
+.compra-ingresso-total span {
+    color: var(--text-main);
+    font-size: 13px;
+}
+
+.compra-ingresso-total strong {
+    color: var(--text-main);
+    font-size: 24px;
     font-weight: 800;
 }
 

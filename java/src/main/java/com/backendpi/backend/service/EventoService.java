@@ -89,6 +89,10 @@ public class EventoService {
             evento.setExigeCheckin(false);
         }
 
+        if (evento.getTaxaRepassadaComprador() == null) {
+            evento.setTaxaRepassadaComprador(false);
+        }
+
         validarDadosEvento(evento, true);
 
         return eventoRepository.save(evento);
@@ -122,8 +126,8 @@ public class EventoService {
             );
         }
 
-        if (evento.getPrecoIngresso() != null
-                && evento.getPrecoIngresso().signum() < 0) {
+        if (novo.getPrecoIngresso() != null
+                && novo.getPrecoIngresso().signum() < 0) {
             throw new RuntimeException(
                     "O preço do ingresso não pode ser negativo"
             );
@@ -149,8 +153,13 @@ public class EventoService {
         evento.setComunidadeId(novo.getComunidadeId());
         evento.setLimiteParticipantes(novo.getLimiteParticipantes());
         evento.setExigeCheckin(novo.getExigeCheckin());
+        if (novo.getTaxaRepassadaComprador() != null) {
+            evento.setTaxaRepassadaComprador(novo.getTaxaRepassadaComprador());
+        }
         validarDadosEvento(evento, false);
-        evento.setPrecoIngresso(novo.getPrecoIngresso());
+        if (novo.getPrecoIngresso() != null) {
+            evento.setPrecoIngresso(novo.getPrecoIngresso());
+        }
 
         return eventoRepository.save(evento);
     }
@@ -272,6 +281,7 @@ public class EventoService {
                                         evento.getId(),
                                         0L
                                 ),
+                                evento.getTaxaRepassadaComprador(),
                                 evento.getLatitude() != null ? evento.getLatitude().doubleValue() : null,
                                 evento.getLongitude() != null ? evento.getLongitude().doubleValue() : null
                         )

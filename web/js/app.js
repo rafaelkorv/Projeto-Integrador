@@ -1,4 +1,4 @@
-import { ApiService } from './api_service.js?v=event-price-filter-1';
+import { ApiService } from './api_service.js?v=checkout-platform-fee-1';
 
 // Controlador central da interface: mantém o estado em memória, atualiza o DOM e delega o acesso ao servidor ao ApiService.
 class AppController {
@@ -4350,6 +4350,8 @@ ${ApiService.getIdUsuarioLogado() ? `
             precoValor
                 ? parseFloat(precoValor)
                 : 0;
+        const taxaRepassadaComprador =
+            document.getElementById('evento-taxa-repassada').value === 'true';
         const exigeCheckin =
             document.getElementById('evento-checkin').checked;
 
@@ -4459,6 +4461,7 @@ ${ApiService.getIdUsuarioLogado() ? `
                 : null,
 
             precoIngresso,
+            taxaRepassadaComprador,
 
             exigeCheckin
         };
@@ -4787,6 +4790,12 @@ ${ApiService.getIdUsuarioLogado() ? `
         document.getElementById('editar-evento-limite').value =
             evento.limiteParticipantes || '';
 
+        document.getElementById('editar-evento-preco').value =
+            evento.precoIngresso || '';
+
+        document.getElementById('editar-evento-taxa-repassada').value =
+            String(evento.taxaRepassadaComprador === true);
+
         document.getElementById('editar-evento-checkin').checked =
             evento.exigeCheckin === true;
 
@@ -4852,6 +4861,12 @@ ${ApiService.getIdUsuarioLogado() ? `
         const limiteValor =
             document.getElementById('editar-evento-limite').value;
 
+        const precoValor =
+            document.getElementById('editar-evento-preco').value;
+        const precoIngresso = precoValor ? Number(precoValor) : 0;
+        const taxaRepassadaComprador =
+            document.getElementById('editar-evento-taxa-repassada').value === 'true';
+
         const exigeCheckin =
             document.getElementById('editar-evento-checkin').checked;
 
@@ -4879,6 +4894,10 @@ ${ApiService.getIdUsuarioLogado() ? `
             return alert(
                 "O horário de fim deve ser depois do horário de início."
             );
+        }
+
+        if (!Number.isFinite(precoIngresso) || precoIngresso < 0) {
+            return alert("O valor do ingresso não pode ser negativo.");
         }
 
         if (encerramentoInscricoes) {
@@ -4943,6 +4962,8 @@ ${ApiService.getIdUsuarioLogado() ? `
                     ? parseInt(limiteValor)
                     : null,
 
+            precoIngresso,
+            taxaRepassadaComprador,
             exigeCheckin
         };
 
@@ -5062,12 +5083,18 @@ ${ApiService.getIdUsuarioLogado() ? `
             return;
         }
 
-        const resposta = await ApiService.sairEvento(idEvento, idUsuario);
+        try {
+            const resposta = await ApiService.sairEvento(idEvento, idUsuario);
 
-        if (resposta.ok) {
+            if (!resposta.ok) {
+                this.mostrarFeedbackGlobal("Não foi possível cancelar sua participação.");
+                return;
+            }
+
             await this.carregarEventos();
             await this.abrirDetalhesEvento(idEvento);
-        } else {
+        } catch (erro) {
+            console.error("Erro ao sair do evento:", erro);
             this.mostrarFeedbackGlobal("Não foi possível cancelar sua participação.");
         }
     }
@@ -8193,21 +8220,32 @@ ${ApiService.getIdUsuarioLogado() ? `
 
         this.eventoCompraId = idEvento;
 
-        const precoFormatado =
-            preco.toLocaleString('pt-BR', {
-                style: 'currency',
-                currency: 'BRL'
-            });
-
         document.getElementById(
             'compra-ingresso-evento-nome'
         ).textContent = evento.titulo || 'Evento';
 
-        document.getElementById(
-            'compra-ingresso-preco'
-        ).textContent = precoFormatado;
+        try {
+            const calculo = await ApiService.calcularPagamento(idEvento);
+            const formatarMoeda = valor => Number(valor).toLocaleString('pt-BR', {
+                style: 'currency',
+                currency: 'BRL'
+            });
 
-        this.abrirModal('compra-ingresso-modal');
+            document.getElementById('compra-ingresso-subtotal').textContent =
+                formatarMoeda(calculo.subtotal);
+            document.getElementById('compra-ingresso-taxa').textContent =
+                evento.taxaRepassadaComprador === true
+                    ? formatarMoeda(calculo.taxaPlataforma)
+                    : 'Absorvida pelo organizador';
+            document.getElementById('compra-ingresso-total').textContent =
+                formatarMoeda(calculo.totalComprador);
+
+            this.abrirModal('compra-ingresso-modal');
+        } catch (erro) {
+            console.error('Erro ao calcular total da compra:', erro);
+            this.eventoCompraId = null;
+            alert('Não foi possível calcular o valor total do ingresso.');
+        }
     }
 
     async confirmarCompraIngresso() {

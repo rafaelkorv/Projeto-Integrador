@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
         rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css?v=chat-avatar-1">
+    <link rel="stylesheet" href="css/style.css?v=checkout-platform-fee-1">
 </head>
 
 <body>
@@ -945,6 +945,18 @@
                             </div>
                             <small class="form-hint">Deixe em branco ou informe 0 para um evento gratuito.</small>
                         </div>
+
+                        <div class="form-group">
+                            <label for="evento-taxa-repassada">Taxa da plataforma</label>
+                            <div class="form-input-wrap">
+                                <i class="material-icons">payments</i>
+                                <select id="evento-taxa-repassada">
+                                    <option value="false">Absorvida pelo organizador</option>
+                                    <option value="true">Repassada ao comprador</option>
+                                </select>
+                            </div>
+                            <small class="form-hint">Taxa: 8% do ingresso + R$ 2,00 por ingresso.</small>
+                        </div>
                     </div>
                 </div>
 
@@ -1536,6 +1548,30 @@
                         <i class="material-icons">settings</i> Configurações
                     </div>
 
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label for="editar-evento-preco">Valor do ingresso</label>
+                            <div class="form-input-wrap">
+                                <i class="material-icons">confirmation_number</i>
+                                <input type="number" id="editar-evento-preco" min="0" step="0.01"
+                                    placeholder="0,00">
+                            </div>
+                            <small class="form-hint">Deixe em branco ou informe 0 para um evento gratuito.</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="editar-evento-taxa-repassada">Taxa da plataforma</label>
+                            <div class="form-input-wrap">
+                                <i class="material-icons">payments</i>
+                                <select id="editar-evento-taxa-repassada">
+                                    <option value="false">Absorvida pelo organizador</option>
+                                    <option value="true">Repassada ao comprador</option>
+                                </select>
+                            </div>
+                            <small class="form-hint">Taxa: 8% do ingresso + R$ 2,00 por ingresso.</small>
+                        </div>
+                    </div>
+
                     <div class="checkbox-card">
                         <label class="checkbox-container">
                             <input type="checkbox" id="editar-evento-checkin">
@@ -1634,9 +1670,19 @@
             <strong id="compra-ingresso-evento-nome">Evento</strong>
         </div>
 
-        <div class="compra-ingresso-preco-area">
-            <span>Valor do ingresso</span>
-            <strong id="compra-ingresso-preco">R$ 0,00</strong>
+        <div class="compra-ingresso-resumo">
+            <div class="compra-ingresso-linha">
+                <span>Subtotal do ingresso</span>
+                <strong id="compra-ingresso-subtotal">R$ 0,00</strong>
+            </div>
+            <div class="compra-ingresso-linha">
+                <span>Taxa da plataforma</span>
+                <strong id="compra-ingresso-taxa">R$ 0,00</strong>
+            </div>
+            <div class="compra-ingresso-linha compra-ingresso-total">
+                <span>Total a pagar</span>
+                <strong id="compra-ingresso-total">R$ 0,00</strong>
+            </div>
         </div>
 
         <div class="compra-ingresso-aviso">
@@ -1672,10 +1718,26 @@
     </div>
 </div>
 
+    <div class="modal-overlay" id="modal-confirmacao" role="dialog" aria-modal="true"
+        aria-labelledby="modal-confirmacao-titulo">
+        <div class="modal">
+            <h2 id="modal-confirmacao-titulo">Confirmar ação</h2>
+            <p id="modal-confirmacao-mensagem"></p>
+            <div class="modal-confirmacao-acoes">
+                <button type="button" class="btn-secondary"
+                    onclick="app.fecharModal('modal-confirmacao')">
+                    Cancelar
+                </button>
+                <button type="button" class="btn-danger" id="btn-modal-confirmar">
+                    Confirmar
+                </button>
+            </div>
+        </div>
+    </div>
+
     <div
     class="modal-overlay"
     id="configuracoes-modal"
->
 
     <div class="modal configuracoes-modal">
 
@@ -1790,7 +1852,7 @@
 </div>
 
     <!-- type="module" permite importar ApiService; servir esta página por HTTP evita bloqueios de módulos em file://. -->
-    <script type="module" src="js/app.js?v=event-price-filter-1"></script>
+    <script type="module" src="js/app.js?v=event-leave-confirmation-1"></script>
 </body>
 
 </html>

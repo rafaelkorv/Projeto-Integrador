@@ -67,6 +67,9 @@ public class Evento {
     @Column(name = "criador_id", nullable = false)
     private Long criadorId;
 
+    @Column(name = "taxa_repassada_comprador", nullable = false)
+    private Boolean taxaRepassadaComprador;
+
     @Column(name = "limite_participantes")
     private Integer limiteParticipantes;
 
@@ -258,6 +261,14 @@ public void setLongitude(BigDecimal longitude) {
 
     public void setPrecoIngresso(BigDecimal precoIngresso) {
         this.precoIngresso = precoIngresso;
+    }
+
+    public Boolean getTaxaRepassadaComprador() {
+        return taxaRepassadaComprador;
+    }
+
+    public void setTaxaRepassadaComprador(Boolean taxaRepassadaComprador) {
+        this.taxaRepassadaComprador = taxaRepassadaComprador;
     }
 
 }

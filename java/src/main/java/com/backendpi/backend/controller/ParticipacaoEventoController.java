@@ -43,7 +43,7 @@ public class ParticipacaoEventoController {
     }
 
     @DeleteMapping("/{idEvento}/participar/{idUsuario}")
-    public void cancelarParticipacao(
+    public ResponseEntity<Void> cancelarParticipacao(
             @PathVariable Long idEvento,
             @PathVariable Long idUsuario) {
 
@@ -51,6 +51,8 @@ public class ParticipacaoEventoController {
                 idEvento,
                 idUsuario
         );
+
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{idEvento}/participantes")
