@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.backendpi.backend.dto.MensagemDTO;
 import com.backendpi.backend.service.MensagemService;
@@ -58,6 +59,10 @@ public class MensagemController {
 
             return ResponseEntity.ok(mensagem);
 
+        } catch (ResponseStatusException erro) {
+            return ResponseEntity
+                    .status(erro.getStatusCode())
+                    .body(erro.getReason());
         } catch (RuntimeException erro) {
 
             return ResponseEntity

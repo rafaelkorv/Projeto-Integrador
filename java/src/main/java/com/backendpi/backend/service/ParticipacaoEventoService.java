@@ -6,6 +6,8 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.backendpi.backend.model.Evento;
 import com.backendpi.backend.model.EventoListaEspera;
@@ -14,6 +16,7 @@ import com.backendpi.backend.repository.EventoRepository;
 import com.backendpi.backend.repository.EventoListaEsperaRepository;
 import com.backendpi.backend.repository.ParticipacaoEventoRepository;
 import com.backendpi.backend.repository.UsuarioRepository;
+import com.backendpi.backend.security.AuthenticatedUserContext;
 
 @Service
 public class ParticipacaoEventoService {
@@ -40,6 +43,7 @@ public class ParticipacaoEventoService {
 
     @Transactional
     public ParticipacaoEvento participar(Long idEvento, Long idUsuario) {
+        AuthenticatedUserContext.requireMatches(idUsuario);
 
         Evento evento = eventoRepository.findByIdForUpdate(idEvento)
                 .orElseThrow(()
@@ -93,6 +97,7 @@ public class ParticipacaoEventoService {
 
     @Transactional
     public EventoListaEspera entrarNaListaEspera(Long idEvento, Long idUsuario) {
+        AuthenticatedUserContext.requireMatches(idUsuario);
         Evento evento = eventoRepository.findByIdForUpdate(idEvento)
                 .orElseThrow(() -> new RuntimeException("Evento não encontrado"));
         validarEventoAberto(evento);
@@ -119,11 +124,13 @@ public class ParticipacaoEventoService {
     }
 
     public boolean estaNaListaEspera(Long idEvento, Long idUsuario) {
+        AuthenticatedUserContext.requireMatches(idUsuario);
         return listaEsperaRepository.existsByUsuarioIdAndEventoId(idUsuario, idEvento);
     }
 
     @Transactional
     public void sairDaListaEspera(Long idEvento, Long idUsuario) {
+        AuthenticatedUserContext.requireMatches(idUsuario);
         listaEsperaRepository.deleteByUsuarioIdAndEventoId(idUsuario, idEvento);
     }
 
@@ -131,6 +138,7 @@ public class ParticipacaoEventoService {
     public void cancelarParticipacao(
             Long idEvento,
             Long idUsuario) {
+        AuthenticatedUserContext.requireMatches(idUsuario);
 
         eventoRepository.findByIdForUpdate(idEvento)
                 .orElseThrow(() -> new RuntimeException("Evento não encontrado"));
@@ -151,9 +159,13 @@ public class ParticipacaoEventoService {
     }
 
     public List<ParticipacaoEvento> listarPorEvento(Long idEvento) {
-
-        if (!eventoRepository.existsById(idEvento)) {
-            throw new RuntimeException("Evento não encontrado");
+        Evento evento = eventoRepository.findById(idEvento)
+                .orElseThrow(() -> new RuntimeException("Evento não encontrado"));
+        if (!evento.getCriadorId().equals(AuthenticatedUserContext.requireUserId())) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Usuário sem permissão para consultar os participantes."
+            );
         }
 
         return participacaoRepository.findByEventoId(idEvento);
@@ -164,10 +176,11 @@ public class ParticipacaoEventoService {
     }
 
     public ResumoOrganizador obterResumoOrganizador(Long idEvento, Long idSolicitante) {
+        AuthenticatedUserContext.requireMatches(idSolicitante);
         Evento evento = eventoRepository.findById(idEvento)
                 .orElseThrow(() -> new RuntimeException("Evento não encontrado"));
         if (!evento.getCriadorId().equals(idSolicitante)) {
-            throw new RuntimeException("Usuário sem permissão para consultar este evento");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Usuário sem permissão para consultar este evento");
         }
 
         List<ParticipacaoEvento> participantes = participacaoRepository.findByEventoId(idEvento);
@@ -216,12 +229,14 @@ public class ParticipacaoEventoService {
             Long idEvento,
             Long idParticipante,
             Long idSolicitante) {
+        AuthenticatedUserContext.requireMatches(idSolicitante);
 
         Evento evento = eventoRepository.findByIdForUpdate(idEvento)
                 .orElseThrow(() -> new RuntimeException("Evento não encontrado"));
 
         if (!evento.getCriadorId().equals(idSolicitante)) {
-            throw new RuntimeException(
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
                     "Usuário sem permissão para remover participantes"
             );
         }
@@ -334,12 +349,14 @@ public class ParticipacaoEventoService {
             Long idEvento,
             Long idSolicitante,
             String tokenIngresso) {
+        AuthenticatedUserContext.requireMatches(idSolicitante);
 
         Evento evento = eventoRepository.findById(idEvento)
                 .orElseThrow(() -> new RuntimeException("Evento não encontrado"));
 
         if (!evento.getCriadorId().equals(idSolicitante)) {
-            throw new RuntimeException(
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
                     "Usuário sem permissão para validar ingressos deste evento"
             );
         }

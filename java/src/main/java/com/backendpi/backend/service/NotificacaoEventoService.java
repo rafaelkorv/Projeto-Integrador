@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.backendpi.backend.model.NotificacaoEvento;
 import com.backendpi.backend.repository.NotificacaoEventoRepository;
 import com.backendpi.backend.repository.ParticipacaoEventoRepository;
+import com.backendpi.backend.security.AuthenticatedUserContext;
 
 @Service
 public class NotificacaoEventoService {
@@ -42,12 +43,15 @@ public class NotificacaoEventoService {
         );
     }
 
+
     public List<NotificacaoEvento> listar(Long usuarioId) {
+        AuthenticatedUserContext.requireMatches(usuarioId);
         return notificacaoRepository.findTop50ByUsuarioIdOrderByCriadoEmDesc(usuarioId);
     }
 
     @Transactional
     public boolean marcarComoLida(Long usuarioId, Long notificacaoId) {
+        AuthenticatedUserContext.requireMatches(usuarioId);
         NotificacaoEvento notificacao = notificacaoRepository
                 .findByIdAndUsuarioId(notificacaoId, usuarioId)
                 .orElse(null);

@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
-import 'package:http/http.dart' as http;
+import 'authenticated_http.dart' as http;
 import '../models/comentario.dart';
 import 'api_service.dart';
 

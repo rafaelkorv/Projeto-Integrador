@@ -84,9 +84,6 @@
                 <button class="nav-btn" id="tab-busca" onclick="app.mudarAba('busca')">
                     <i class="material-icons">people</i> Pessoas
                 </button>
-                <button class="nav-btn" id="tab-agenda" onclick="app.mudarAba('agenda')">
-                    <i class="material-icons">bookmark</i> Minha agenda
-                </button>
                 <button class="nav-btn" id="tab-notificacoes" onclick="app.mudarAba('notificacoes')">
                     <i class="material-icons">notifications</i> Notificações
                     <span id="notificacoes-nao-lidas" class="notificacoes-contador" hidden></span>
@@ -368,16 +365,18 @@
                 </div>
 
                 <div id="view-agenda" class="view-section">
-                    <div class="page-header">
+                    <div class="page-header agenda-page-header">
                         <div>
                             <span class="section-kicker">Seus próximos encontros</span>
                             <h1>Minha agenda</h1>
+                            <p>Encontre rapidamente os eventos que você salvou.</p>
                         </div>
-                        <button class="btn-secondary" onclick="app.exportarAgendaIcs()">
-                            <i class="material-icons">calendar_month</i> Exportar calendário
+                        <button class="agenda-export-btn" onclick="app.exportarAgendaIcs()">
+                            <i class="material-icons" aria-hidden="true">calendar_month</i>
+                            <span>Exportar calendário</span>
                         </button>
                     </div>
-                    <div id="agenda-eventos-container" class="eventos-container">
+                    <div id="agenda-eventos-container" class="eventos-container agenda-eventos-container">
                         Carregando agenda...
                     </div>
                 </div>
@@ -762,9 +761,17 @@
             <input type="file" id="post-imagens" accept="image/jpeg,image/png,image/webp" multiple hidden>
             <small class="form-hint">Escolha várias de uma vez ou adicione mais depois. Até 4 imagens JPG, PNG ou WEBP; máximo de 5 MB cada.</small>
             <div id="post-imagens-preview" class="post-image-preview" aria-live="polite"></div>
-            <select id="post-comunidade-id">
-                <option value="">Publicar no feed global</option>
-            </select>
+            <div class="post-destination-field">
+                <label for="post-comunidade-id">Onde publicar?</label>
+                <div class="post-destination-select">
+                    <i class="material-icons" aria-hidden="true">public</i>
+                    <select id="post-comunidade-id" aria-label="Destino da publicação">
+                        <option value="">Publicar no feed global</option>
+                    </select>
+                    <i class="material-icons post-destination-chevron" aria-hidden="true">expand_more</i>
+                </div>
+                <small>Escolha o feed global ou uma comunidade da qual você participa.</small>
+            </div>
             <button class="btn-full" id="post-publicar-btn" onclick="app.enviarPost()">Publicar</button>
             <button class="btn-cancel" onclick="app.fecharModal('post-modal')">Cancelar</button>
         </div>
@@ -1780,6 +1787,26 @@
         </div>
     </div>
 
+    <div class="modal-overlay" id="compartilhar-link-modal" role="dialog" aria-modal="true"
+        aria-labelledby="compartilhar-link-titulo">
+        <div class="modal compartilhar-link-modal">
+            <div class="compartilhar-link-icon">
+                <i class="material-icons" aria-hidden="true">link</i>
+            </div>
+            <span class="section-kicker">Compartilhar</span>
+            <h2 id="compartilhar-link-titulo">Link da publicação</h2>
+            <p>Copie o link para compartilhar esta publicação com outras pessoas.</p>
+            <label for="post-link-compartilhado">Endereço</label>
+            <input id="post-link-compartilhado" type="text" readonly>
+            <button type="button" class="btn-full" onclick="app.copiarLinkCompartilhado()">
+                Copiar link
+            </button>
+            <button type="button" class="btn-cancel" onclick="app.fecharModal('compartilhar-link-modal')">
+                Fechar
+            </button>
+        </div>
+    </div>
+
     <div
     class="modal-overlay"
     id="configuracoes-modal"
@@ -1898,6 +1925,8 @@
 
     <!-- type="module" permite importar ApiService; servir esta página por HTTP evita bloqueios de módulos em file://. -->
     <script type="module" src="js/app.js?v=event-cycle-3"></script>
+    <div id="toast-container" class="toast-container" aria-label="Avisos" aria-live="polite"
+        aria-relevant="additions text"></div>
 </body>
 
 </html>

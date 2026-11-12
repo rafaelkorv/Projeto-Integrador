@@ -25,6 +25,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.backendpi.backend.dto.EventoResumoDTO;
 import com.backendpi.backend.model.Evento;
+import com.backendpi.backend.security.AuthenticatedUserContext;
 import com.backendpi.backend.service.EventoService;
 
 @RestController
@@ -89,6 +90,7 @@ public class EventoController {
 
             Evento evento = eventoService.buscarPorId(idEvento)
                     .orElseThrow(() -> new IllegalArgumentException("Evento não encontrado"));
+            AuthenticatedUserContext.requireMatches(evento.getCriadorId());
             Path pasta = Paths.get("uploads", "eventos");
             Files.createDirectories(pasta);
             String extensao = switch (capa.getContentType()) {

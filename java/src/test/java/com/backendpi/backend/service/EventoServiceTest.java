@@ -16,6 +16,8 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
@@ -29,6 +31,7 @@ import com.backendpi.backend.model.ParticipacaoEvento;
 import com.backendpi.backend.repository.EventoListaEsperaRepository;
 import com.backendpi.backend.repository.EventoRepository;
 import com.backendpi.backend.repository.ParticipacaoEventoRepository;
+import com.backendpi.backend.security.AuthenticatedUserContext;
 
 @ExtendWith(MockitoExtension.class)
 class EventoServiceTest {
@@ -50,6 +53,16 @@ class EventoServiceTest {
 
     @InjectMocks
     private EventoService eventoService;
+
+    @BeforeEach
+    void autenticarOrganizador() {
+        AuthenticatedUserContext.setUserId(1L);
+    }
+
+    @AfterEach
+    void limparAutenticacao() {
+        AuthenticatedUserContext.clear();
+    }
 
     @Test
     void deveNotificarInscritosEListaDeEsperaAntesDeExcluirEvento() {

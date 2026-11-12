@@ -8,6 +8,7 @@ class Usuario {
   String? bio;
   String? dataNascimento;
   String? fotoPerfil;
+  String? authToken;
 
   Usuario({
     this.idUsuario,
@@ -19,6 +20,7 @@ class Usuario {
     this.bio,
     this.dataNascimento,
     this.fotoPerfil,
+    this.authToken,
   });
 
   static int? _id(dynamic value) {
@@ -43,6 +45,7 @@ class Usuario {
       bio: dados['bio']?.toString(),
       dataNascimento: (dados['dataNascimento'] ?? dados['data_nascimento'])?.toString(),
       fotoPerfil: (dados['fotoPerfil'] ?? dados['foto_perfil'])?.toString(),
+      authToken: (dados['authToken'] ?? json['authToken'])?.toString(),
     );
   }
 

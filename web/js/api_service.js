@@ -19,7 +19,12 @@ export class ApiService {
 
         if (raw) {
             try {
-                return JSON.parse(raw);
+                const usuario = JSON.parse(raw);
+                if (!usuario.authToken) {
+                    storage.removeItem(this.STORAGE_KEY);
+                    return null;
+                }
+                return usuario;
             } catch (error) {
                 this.fazerLogout();
                 return null;
@@ -30,6 +35,10 @@ export class ApiService {
         if (legado) {
             try {
                 const usuario = JSON.parse(legado);
+                if (!usuario.authToken) {
+                    this.getStorage('local')?.removeItem(this.STORAGE_KEY);
+                    return null;
+                }
                 this.salvarSessao(usuario);
                 this.getStorage('local')?.removeItem(this.STORAGE_KEY);
                 return usuario;
@@ -44,13 +53,60 @@ export class ApiService {
 
     static salvarSessao(usuario) {
         const storage = this.getStorage('session');
-        if (storage) storage.setItem(this.STORAGE_KEY, JSON.stringify(usuario));
+        if (storage) {
+            const rawSessaoAtual = storage.getItem(this.STORAGE_KEY);
+            let sessaoAtual = null;
+            if (rawSessaoAtual) {
+                try {
+                    sessaoAtual = JSON.parse(rawSessaoAtual);
+                } catch (erro) {
+                    console.error('Não foi possível preservar o token da sessão atual:', erro);
+                }
+            }
+            const usuarioComToken = {
+                ...usuario,
+                authToken: usuario.authToken || sessaoAtual?.authToken
+            };
+            storage.setItem(this.STORAGE_KEY, JSON.stringify(usuarioComToken));
+        }
         this.getStorage('local')?.removeItem(this.STORAGE_KEY);
     }
 
     static fazerLogout() {
-        this.getStorage('session')?.removeItem(this.STORAGE_KEY);
+        const storage = this.getStorage('session');
+        const raw = storage ? storage.getItem(this.STORAGE_KEY) : null;
+        if (raw) {
+            try {
+                const token = JSON.parse(raw).authToken;
+                if (token) {
+                    void this.request(`${this.API_URL}/auth/logout`, { method: 'POST' })
+                        .catch(erro => console.error('Não foi possível encerrar a sessão no servidor:', erro));
+                }
+            } catch (erro) {
+                console.error('Não foi possível ler a sessão antes de sair:', erro);
+            }
+        }
+        storage?.removeItem(this.STORAGE_KEY);
         this.getStorage('local')?.removeItem(this.STORAGE_KEY);
+    }
+
+    static getAuthToken() {
+        return this.getUsuarioLogado()?.authToken || null;
+    }
+
+    static request(input, init = {}) {
+        const token = this.getAuthToken();
+        if (!token) return window.fetch(input, init);
+
+        const requestUrl = typeof input === 'string' ? input : input.url;
+        const requestOrigin = new URL(requestUrl, window.location.href).origin;
+        if (requestOrigin !== new URL(this.API_URL).origin) {
+            return window.fetch(input, init);
+        }
+
+        const headers = new Headers(init.headers || {});
+        headers.set('Authorization', `Bearer ${token}`);
+        return window.fetch(input, { ...init, headers });
     }
 
     static getIdUsuarioLogado() {
@@ -825,3 +881,5 @@ export class ApiService {
         return await resposta.json();
     }
 }
+
+const fetch = (input, init) => ApiService.request(input, init);

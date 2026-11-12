@@ -11,6 +11,7 @@ import com.backendpi.backend.model.EventoSalvo;
 import com.backendpi.backend.repository.EventoRepository;
 import com.backendpi.backend.repository.EventoSalvoRepository;
 import com.backendpi.backend.repository.UsuarioRepository;
+import com.backendpi.backend.security.AuthenticatedUserContext;
 
 @Service
 public class EventoSalvoService {
@@ -29,6 +30,7 @@ public class EventoSalvoService {
     }
 
     public List<Evento> listarAgenda(Long usuarioId) {
+        AuthenticatedUserContext.requireMatches(usuarioId);
         return eventoSalvoRepository.findByUsuarioIdOrderBySalvoEmDesc(usuarioId)
                 .stream()
                 .map(item -> eventoRepository.findById(item.getEventoId()).orElse(null))
@@ -38,6 +40,7 @@ public class EventoSalvoService {
 
     @Transactional
     public void salvar(Long usuarioId, Long eventoId) {
+        AuthenticatedUserContext.requireMatches(usuarioId);
         if (!usuarioRepository.existsById(usuarioId)) {
             throw new IllegalArgumentException("Usuário não encontrado");
         }
@@ -56,11 +59,13 @@ public class EventoSalvoService {
 
     @Transactional
     public void remover(Long usuarioId, Long eventoId) {
+        AuthenticatedUserContext.requireMatches(usuarioId);
         eventoSalvoRepository.findByUsuarioIdAndEventoId(usuarioId, eventoId)
                 .ifPresent(eventoSalvoRepository::delete);
     }
 
     public boolean estaSalvo(Long usuarioId, Long eventoId) {
+        AuthenticatedUserContext.requireMatches(usuarioId);
         return eventoSalvoRepository.findByUsuarioIdAndEventoId(usuarioId, eventoId).isPresent();
     }
 }

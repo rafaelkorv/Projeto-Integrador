@@ -5,6 +5,9 @@ import java.util.List;
 
 import com.backendpi.backend.model.PostSalvo;
 import com.backendpi.backend.repository.PostSalvoRepository;
+import com.backendpi.backend.security.AuthenticatedUserContext;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class PostSalvoService {
@@ -16,14 +19,21 @@ public class PostSalvoService {
     }
 
     public List<PostSalvo> listar() {
-        return repository.findAll();
+        return repository.findByIdUsuario(AuthenticatedUserContext.requireUserId());
     }
 
     public PostSalvo salvar(PostSalvo postSalvo) {
+        AuthenticatedUserContext.requireMatches(postSalvo.getIdUsuario());
         return repository.save(postSalvo);
     }
 
     public void deletar(Long id) {
-        repository.deleteById(id);
+        Long idUsuario = AuthenticatedUserContext.requireUserId();
+        PostSalvo salvo = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Publicação salva não encontrada."));
+        if (!idUsuario.equals(salvo.getIdUsuario())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Usuário sem permissão para remover este favorito.");
+        }
+        repository.delete(salvo);
     }
 }

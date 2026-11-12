@@ -4,13 +4,16 @@ import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.backendpi.backend.model.Comunidade;
 import com.backendpi.backend.model.Post;
 import com.backendpi.backend.repository.ComentarioRepository;
 import com.backendpi.backend.repository.ComunidadeRepository;
 import com.backendpi.backend.repository.PostRepository;
+import com.backendpi.backend.security.AuthenticatedUserContext;
 
 @Service
 public class PostService {
@@ -46,6 +49,7 @@ public class PostService {
     }
 
     public Post salvar(Post post) {
+        AuthenticatedUserContext.requireMatches(post.getIdUsuario());
 
         // Post global: não precisa pertencer a comunidade
         if (post.getIdComunidade() == null) {
@@ -75,6 +79,7 @@ public class PostService {
     }
 
     public void deletar(Long idPost, Long idUsuario) {
+        AuthenticatedUserContext.requireMatches(idUsuario);
 
         Post post = repository.findById(idPost)
                 .orElseThrow(() -> new RuntimeException("Post não encontrado"));
@@ -95,7 +100,7 @@ public class PostService {
         }
 
         if (!eAutor && !eAdministrador) {
-            throw new RuntimeException("Usuário sem permissão para excluir este post");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Usuário sem permissão para excluir este post");
         }
 
         comentarioRepository.deleteAll(
@@ -106,13 +111,18 @@ public class PostService {
     }
 
     public Post atualizar(Long id, Post novo) {
+        Long idUsuario = AuthenticatedUserContext.requireUserId();
 
         return repository.findById(id).map(post -> {
+            if (!post.getIdUsuario().equals(idUsuario)) {
+                throw new ResponseStatusException(
+                        HttpStatus.FORBIDDEN,
+                        "Usuário sem permissão para editar esta publicação"
+                );
+            }
 
             post.setTitulo(novo.getTitulo());
             post.setConteudo(novo.getConteudo());
-            post.setIdUsuario(novo.getIdUsuario());
-            post.setIdComunidade(novo.getIdComunidade());
 
             return repository.save(post);
 

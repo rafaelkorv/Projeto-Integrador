@@ -6,6 +6,7 @@ import com.backendpi.backend.service.PostService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -42,6 +43,8 @@ public class ImagensPostController {
 
         try {
             return ResponseEntity.ok(service.salvarUpload(idPost, imagem));
+        } catch (ResponseStatusException erro) {
+            throw erro;
         } catch (IllegalArgumentException erro) {
             return ResponseEntity.badRequest().body(erro.getMessage());
         } catch (Exception erro) {

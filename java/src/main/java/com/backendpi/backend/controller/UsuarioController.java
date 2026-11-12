@@ -25,6 +25,8 @@ import com.backendpi.backend.dto.UsuarioPerfilDTO;
 import com.backendpi.backend.model.Usuario;
 import com.backendpi.backend.repository.UsuarioRepository;
 import com.backendpi.backend.service.UsuarioService;
+import com.backendpi.backend.security.AuthSessionService;
+import com.backendpi.backend.security.AuthenticatedUserContext;
 
 @RestController
 @RequestMapping("/usuarios")
@@ -33,36 +35,45 @@ public class UsuarioController {
 
     private final UsuarioRepository usuarioRepository;
     private final UsuarioService usuarioService;
+    private final AuthSessionService authSessionService;
 
     public UsuarioController(
             UsuarioRepository usuarioRepository,
-            UsuarioService usuarioService) {
+            UsuarioService usuarioService,
+            AuthSessionService authSessionService) {
 
         this.usuarioRepository = usuarioRepository;
         this.usuarioService = usuarioService;
+        this.authSessionService = authSessionService;
     }
 
     @GetMapping
-    public List<Usuario> listar() {
-        return usuarioRepository.findAll();
+    public List<UsuarioPerfilDTO> listar() {
+        return usuarioRepository.findAll().stream()
+                .map(this::criarPerfil)
+                .toList();
     }
 
     @PostMapping
-    public Usuario criar(@RequestBody Usuario usuario) {
-        return usuarioService.salvar(usuario);
+    public UsuarioPerfilDTO criar(@RequestBody Usuario usuario) {
+        Usuario salvo = usuarioService.salvar(usuario);
+        return criarPerfilComSessao(salvo);
     }
 
     @PutMapping("/{id}")
-    public Usuario atualizar(
+    public UsuarioPerfilDTO atualizar(
             @PathVariable Long id,
             @RequestBody Usuario usuario
     ) {
-        return usuarioService.atualizar(id, usuario);
+        AuthenticatedUserContext.requireMatches(id);
+        return criarPerfil(usuarioService.atualizar(id, usuario));
     }
 
     @DeleteMapping("/{id}")
     public void deletar(@PathVariable Long id) {
-        usuarioRepository.deleteById(id);
+        AuthenticatedUserContext.requireMatches(id);
+        usuarioService.deletar(id);
+        authSessionService.encerrarSessoesDoUsuario(id);
     }
 
     @GetMapping("/{id}")
@@ -92,6 +103,7 @@ public class UsuarioController {
             @PathVariable Long id,
             @RequestBody Usuario dadosPerfil) {
 
+        AuthenticatedUserContext.requireMatches(id);
         return usuarioRepository.findById(id)
                 .map(usuario -> {
 
@@ -152,17 +164,7 @@ public class UsuarioController {
             return ResponseEntity.status(401).build();
         }
 
-        UsuarioPerfilDTO perfil
-                = new UsuarioPerfilDTO(
-                        usuario.getIdUsuario(),
-                        usuario.getNome(),
-                        usuario.getUsername(),
-                        usuario.getBio(),
-                        usuario.getFotoPerfil(),
-                        usuario.getInteresses()
-                );
-
-        return ResponseEntity.ok(perfil);
+        return ResponseEntity.ok(criarPerfilComSessao(usuario));
     }
 
     @PostMapping("/{id}/foto")
@@ -170,92 +172,88 @@ public class UsuarioController {
             @PathVariable Long id,
             @RequestParam("foto") MultipartFile foto) {
 
-        Usuario usuario = usuarioRepository.findById(id)
-                .orElse(null);
-
+        AuthenticatedUserContext.requireMatches(id);
+        Usuario usuario = usuarioRepository.findById(id).orElse(null);
         if (usuario == null) {
             return ResponseEntity.notFound().build();
         }
-
         if (foto.isEmpty()) {
-            return ResponseEntity
-                    .badRequest()
+            return ResponseEntity.badRequest()
                     .body(Map.of("success", false, "error", "Selecione uma imagem."));
         }
 
-                String extensao = switch (foto.getContentType() == null ? "" : foto.getContentType()) {
-                        case "image/jpeg" -> ".jpg";
-                        case "image/png" -> ".png";
-                        case "image/webp" -> ".webp";
-                        default -> null;
-                };
-
-                if (extensao == null) {
-            return ResponseEntity
-                    .badRequest()
-                                        .body(Map.of("success", false, "error", "Use uma imagem JPG, PNG ou WEBP."));
+        String extensao = switch (foto.getContentType() == null ? "" : foto.getContentType()) {
+            case "image/jpeg" -> ".jpg";
+            case "image/png" -> ".png";
+            case "image/webp" -> ".webp";
+            default -> null;
+        };
+        if (extensao == null) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("success", false, "error", "Use uma imagem JPG, PNG ou WEBP."));
         }
-
-        // Limite de 5 MB
         if (foto.getSize() > 5 * 1024 * 1024) {
-            return ResponseEntity
-                    .badRequest()
+            return ResponseEntity.badRequest()
                     .body(Map.of("success", false, "error", "A foto deve ter no máximo 5 MB."));
         }
 
         try {
-                        Path diretorio = Paths.get("uploads", "perfis").toAbsolutePath().normalize();
-                        Files.createDirectories(diretorio);
-                        Path destino = diretorio.resolve(UUID.randomUUID() + extensao).normalize();
-                        if (!destino.startsWith(diretorio)) {
-                                return ResponseEntity.badRequest()
-                                                .body(Map.of("success", false, "error", "Nome de arquivo inválido."));
-                        }
+            Path diretorio = Paths.get("uploads", "perfis").toAbsolutePath().normalize();
+            Files.createDirectories(diretorio);
+            Path destino = diretorio.resolve(UUID.randomUUID() + extensao).normalize();
+            if (!destino.startsWith(diretorio)) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("success", false, "error", "Nome de arquivo inválido."));
+            }
 
-                        try (InputStream arquivo = foto.getInputStream()) {
-                                Files.copy(arquivo, destino);
-                        }
+            try (InputStream arquivo = foto.getInputStream()) {
+                Files.copy(arquivo, destino);
+            }
 
-                        String caminhoFoto = "uploads/perfis/" + destino.getFileName();
-                        String caminhoAnterior = usuario.getFotoPerfil();
-                        usuario.setFotoPerfil(caminhoFoto);
-                        Usuario salvo;
-                        try {
-                                salvo = usuarioRepository.save(usuario);
-                        } catch (RuntimeException erroBanco) {
-                                Files.deleteIfExists(destino);
-                                throw erroBanco;
-                        }
+            String caminhoAnterior = usuario.getFotoPerfil();
+            usuario.setFotoPerfil("uploads/perfis/" + destino.getFileName());
+            Usuario salvo;
+            try {
+                salvo = usuarioRepository.save(usuario);
+            } catch (RuntimeException erroBanco) {
+                Files.deleteIfExists(destino);
+                throw erroBanco;
+            }
 
-                        if (caminhoAnterior != null && caminhoAnterior.startsWith("uploads/perfis/")) {
-                                try {
-                                        String nomeAnterior = Paths.get(caminhoAnterior).getFileName().toString();
-                                        Path fotoAnterior = diretorio.resolve(nomeAnterior).normalize();
-                                        if (fotoAnterior.startsWith(diretorio) && !fotoAnterior.equals(destino)) {
-                                                Files.deleteIfExists(fotoAnterior);
-                                        }
-                                } catch (Exception erroLimpeza) {
-                                        System.err.println("Não foi possível remover a foto de perfil anterior: "
-                                                        + erroLimpeza.getMessage());
-                                }
-                        }
+            if (caminhoAnterior != null && caminhoAnterior.startsWith("uploads/perfis/")) {
+                try {
+                    Path fotoAnterior = diretorio.resolve(Paths.get(caminhoAnterior).getFileName()).normalize();
+                    if (fotoAnterior.startsWith(diretorio) && !fotoAnterior.equals(destino)) {
+                        Files.deleteIfExists(fotoAnterior);
+                    }
+                } catch (Exception erroLimpeza) {
+                    System.err.println("Não foi possível remover a foto de perfil anterior: "
+                            + erroLimpeza.getMessage());
+                }
+            }
 
-            UsuarioPerfilDTO perfil = new UsuarioPerfilDTO(
-                    salvo.getIdUsuario(),
-                    salvo.getNome(),
-                    salvo.getUsername(),
-                    salvo.getBio(),
-                    salvo.getFotoPerfil(),
-                    salvo.getInteresses()
-            );
-
-            return ResponseEntity.ok(perfil);
-
+            return ResponseEntity.ok(criarPerfil(salvo));
         } catch (Exception erro) {
             erro.printStackTrace();
-            return ResponseEntity
-                    .internalServerError()
-                                        .body(Map.of("success", false, "error", "Não foi possível salvar a foto de perfil."));
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("success", false, "error", "Não foi possível salvar a foto de perfil."));
         }
+    }
+
+    private UsuarioPerfilDTO criarPerfil(Usuario usuario) {
+        return new UsuarioPerfilDTO(
+                usuario.getIdUsuario(),
+                usuario.getNome(),
+                usuario.getUsername(),
+                usuario.getBio(),
+                usuario.getFotoPerfil(),
+                usuario.getInteresses()
+        );
+    }
+
+    private UsuarioPerfilDTO criarPerfilComSessao(Usuario usuario) {
+        UsuarioPerfilDTO perfil = criarPerfil(usuario);
+        perfil.setAuthToken(authSessionService.criarSessao(usuario.getIdUsuario()));
+        return perfil;
     }
 }

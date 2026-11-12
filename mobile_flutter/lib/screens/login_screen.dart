@@ -63,6 +63,7 @@ class _LoginScreenState extends State<LoginScreen> {
       username: usuario.username,
       bio: usuario.bio,
       fotoPerfil: usuario.fotoPerfil,
+      authToken: usuario.authToken,
     );
 
     Navigator.pushReplacement(

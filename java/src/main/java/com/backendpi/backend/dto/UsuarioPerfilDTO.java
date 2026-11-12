@@ -11,6 +11,7 @@ public class UsuarioPerfilDTO {
     private String bio;
     private String fotoPerfil;
     private List<String> interesses;
+    private String authToken;
 
     // Construtor completo
     public UsuarioPerfilDTO(
@@ -74,5 +75,13 @@ public class UsuarioPerfilDTO {
 
     public void setInteresses(List<String> interesses) {
         this.interesses = interesses;
+    }
+
+    public String getAuthToken() {
+        return authToken;
+    }
+
+    public void setAuthToken(String authToken) {
+        this.authToken = authToken;
     }
 }

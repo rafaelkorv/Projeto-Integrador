@@ -9,6 +9,7 @@ import com.backendpi.backend.model.Conversa;
 import com.backendpi.backend.model.Usuario;
 import com.backendpi.backend.repository.ConversaRepository;
 import com.backendpi.backend.repository.UsuarioRepository;
+import com.backendpi.backend.security.AuthenticatedUserContext;
 
 @Service
 public class ConversaService {
@@ -28,6 +29,7 @@ public class ConversaService {
             Long idUsuarioA,
             Long idUsuarioB
     ) {
+        AuthenticatedUserContext.requireMatches(idUsuarioA);
 
         if (idUsuarioA == null || idUsuarioB == null) {
             throw new RuntimeException("Os usuários são obrigatórios.");
@@ -93,6 +95,7 @@ public class ConversaService {
     public List<ConversaDTO> listarConversasDoUsuario(
             Long idUsuario
     ) {
+        AuthenticatedUserContext.requireMatches(idUsuario);
 
         return conversaRepository
                 .findByUsuario1_IdUsuarioOrUsuario2_IdUsuario(

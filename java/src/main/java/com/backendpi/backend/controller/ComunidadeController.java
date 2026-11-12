@@ -62,6 +62,7 @@ public class ComunidadeController {
                 return ResponseEntity.badRequest().build();
             }
             Comunidade comunidade = service.buscarPorId(idComunidade);
+            service.validarPermissaoGestao(comunidade);
             Path pasta = Paths.get("uploads", "comunidades");
             Files.createDirectories(pasta);
             String nome = UUID.randomUUID() + "-" +

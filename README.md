@@ -59,6 +59,8 @@ Set-Location .\java
 ```
 A API estará disponível em `http://localhost:8080`.
 
+O login e o cadastro retornam um token de sessão com validade de 12 horas. As operações de escrita da API exigem esse token; após atualizar o backend, reiniciá-lo ou expirar a sessão, entre novamente. As sessões ficam em memória e são invalidadas ao reiniciar o backend.
+
 ### 3. Web
 Com o backend ativo, abra outro terminal na raiz do repositório e inicie um servidor HTTP para a aplicação web:
 

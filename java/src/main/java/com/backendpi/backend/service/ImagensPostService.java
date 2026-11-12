@@ -3,6 +3,9 @@ package com.backendpi.backend.service;
 import com.backendpi.backend.model.ImagensPost;
 import com.backendpi.backend.repository.PostRepository;
 import com.backendpi.backend.repository.ImagensPostRepository;
+import com.backendpi.backend.security.AuthenticatedUserContext;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -28,13 +31,20 @@ public class ImagensPostService {
         return repository.findByIdPostOrderByIdAsc(idPost);
     }
 
-    public ImagensPost salvar(ImagensPost imagem) { return repository.save(imagem); }
-    public void deletar(Long id) { repository.deleteById(id); }
+    public ImagensPost salvar(ImagensPost imagem) {
+        validarPermissaoNoPost(imagem.getIdPost());
+        return repository.save(imagem);
+    }
+
+    public void deletar(Long id) {
+        ImagensPost imagem = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Imagem não encontrada."));
+        validarPermissaoNoPost(imagem.getIdPost());
+        repository.delete(imagem);
+    }
 
     public ImagensPost salvarUpload(Long idPost, MultipartFile imagem) throws IOException {
-        if (!postRepository.existsById(idPost)) {
-            throw new IllegalArgumentException("Publicação não encontrada.");
-        }
+        validarPermissaoNoPost(idPost);
         if (repository.countByIdPost(idPost) >= 4) {
             throw new IllegalArgumentException("Cada publicação pode ter no máximo quatro imagens.");
         }
@@ -70,6 +80,14 @@ public class ImagensPostService {
         } catch (RuntimeException erro) {
             Files.deleteIfExists(destino);
             throw erro;
+        }
+    }
+
+    private void validarPermissaoNoPost(Long idPost) {
+        var post = postRepository.findById(idPost)
+                .orElseThrow(() -> new IllegalArgumentException("Publicação não encontrada."));
+        if (!post.getIdUsuario().equals(AuthenticatedUserContext.requireUserId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Usuário sem permissão para alterar imagens desta publicação.");
         }
     }
 }

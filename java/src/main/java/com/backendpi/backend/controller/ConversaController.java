@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.backendpi.backend.dto.ConversaDTO;
 import com.backendpi.backend.service.ConversaService;
@@ -46,6 +47,10 @@ public class ConversaController {
 
             return ResponseEntity.ok(conversa);
 
+        } catch (ResponseStatusException erro) {
+            return ResponseEntity
+                    .status(erro.getStatusCode())
+                    .body(erro.getReason());
         } catch (RuntimeException erro) {
             return ResponseEntity
                     .badRequest()

@@ -484,6 +484,11 @@ class AppController {
         if (this.modoCadastro) this.renderizarSelecaoInteresses();
     }
     mudarAba(nomeAba) {
+        if (nomeAba === 'agenda') return;
+        this.ativarAba(nomeAba);
+    }
+
+    ativarAba(nomeAba) {
         this.salvarViewAtual(nomeAba);
         document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
         document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
@@ -538,6 +543,10 @@ class AppController {
         </i>
 
         Itens salvos
+    </button>
+    <button class="account-menu-item" role="menuitem" onclick="app.abrirMinhaAgenda()">
+        <i class="material-icons">calendar_month</i>
+        Minha agenda
     </button>
      <button
         class="account-menu-item"
@@ -758,7 +767,7 @@ class AppController {
         const coords = await ApiService.obterLocalizacaoAtual();
         if (!coords) {
             this.atualizarBadgeCoordsEvento('evento-coords-badge', null, null, 'Permissão de GPS negada ou indisponível.');
-            alert('Não foi possível obter sua localização via GPS. Verifique a permissão do seu navegador.');
+            this.mostrarFeedbackGlobal('Não foi possível obter sua localização via GPS. Verifique a permissão do seu navegador.');
             return;
         }
 
@@ -780,7 +789,7 @@ class AppController {
         const coords = await ApiService.obterLocalizacaoAtual();
         if (!coords) {
             this.atualizarBadgeCoordsEvento('editar-evento-coords-badge', null, null, 'Permissão de GPS negada ou indisponível.');
-            alert('Não foi possível obter sua localização via GPS. Verifique a permissão do seu navegador.');
+            this.mostrarFeedbackGlobal('Não foi possível obter sua localização via GPS. Verifique a permissão do seu navegador.');
             return;
         }
 
@@ -860,7 +869,7 @@ class AppController {
                 if (btn) btn.innerHTML = '<i class="material-icons">hourglass_empty</i> Obtendo GPS...';
                 this.coordenadasUsuario = await ApiService.obterLocalizacaoAtual();
                 if (!this.coordenadasUsuario) {
-                    alert("Não foi possível acessar a localização. Verifique se o GPS está ativo e permitido no navegador.");
+                    this.mostrarFeedbackGlobal("Não foi possível acessar a localização. Verifique se o GPS está ativo e permitido no navegador.");
                     this.filtroProximidadeAtivo = false;
                     btn?.classList.remove('ativo');
                     if (selectRaio) selectRaio.style.display = 'none';
@@ -936,7 +945,7 @@ class AppController {
             ApiService.getIdUsuarioLogado();
 
         if (!idUsuario) {
-            return alert("Faça login primeiro.");
+            return this.mostrarFeedbackGlobal("Faça login primeiro.");
         }
 
 
@@ -946,7 +955,7 @@ class AppController {
             this.comunidadeAtivaId &&
             !this.usuarioParticipaDaComunidade
         ) {
-            return alert(
+            return this.mostrarFeedbackGlobal(
                 "Você precisa entrar na comunidade antes de publicar."
             );
         }
@@ -2101,7 +2110,7 @@ class AppController {
     }
 
     async criarComunidade() {
-        if (!ApiService.getUsuarioLogado()) return alert("Faça login primeiro.");
+        if (!ApiService.getUsuarioLogado()) return this.mostrarFeedbackGlobal("Faça login primeiro.");
 
         const nome = document.getElementById('comunidade-nome').value.trim();
         const desc = document.getElementById('comunidade-desc').value.trim();
@@ -2123,7 +2132,7 @@ class AppController {
             document.getElementById('comunidade-imagem').value = '';
             this.carregarComunidades();
         } else {
-            alert("Não foi possível criar a comunidade.");
+            this.mostrarFeedbackGlobal("Não foi possível criar a comunidade.");
         }
     }
 
@@ -2640,7 +2649,7 @@ class AppController {
         const idLogado = ApiService.getIdUsuarioLogado();
 
         if (!idLogado) {
-            return alert("Faça login primeiro.");
+            return this.mostrarFeedbackGlobal("Faça login primeiro.");
         }
 
         const btn = document.getElementById('btn-participar');
@@ -2660,7 +2669,7 @@ class AppController {
             } else {
 
                 // Se ainda não participa, está tentando ENTRAR
-                resposta = await fetch(
+                resposta = await ApiService.request(
                     `${ApiService.API_URL}/comunidades/${this.comunidadeAtivaId}/participar/${idLogado}`,
                     {
                         method: "POST"
@@ -2669,7 +2678,7 @@ class AppController {
             }
 
             if (!resposta.ok) {
-                alert("Não foi possível realizar esta ação.");
+                this.mostrarFeedbackGlobal("Não foi possível realizar esta ação.");
                 return;
             }
             await this.carregarComunidades();
@@ -2680,7 +2689,7 @@ class AppController {
 
         } catch (e) {
             console.error(e);
-            alert("Erro ao atualizar participação na comunidade.");
+            this.mostrarFeedbackGlobal("Erro ao atualizar participação na comunidade.");
         }
     }
 
@@ -2946,24 +2955,24 @@ class AppController {
 
     async alternarCurtida(idPost) {
         const idUsuario = ApiService.getIdUsuarioLogado();
-        if (!idUsuario) return alert('Faça login para curtir publicações.');
+        if (!idUsuario) return this.mostrarFeedbackGlobal('Faça login para curtir publicações.');
         const voto = this.votoDoUsuario(idPost);
         const resposta = voto
             ? await ApiService.deletarVoto(voto.idVoto)
             : await ApiService.criarVoto(idUsuario, idPost);
-        if (!resposta.ok) return alert('Não foi possível atualizar a curtida.');
+        if (!resposta.ok) return this.mostrarFeedbackGlobal('Não foi possível atualizar a curtida.');
         this.votos = voto ? this.votos.filter(item => item.idVoto !== voto.idVoto) : [...this.votos, await resposta.json()];
         this.renderizarFeedGeral();
     }
 
     async alternarPostSalvo(idPost) {
         const idUsuario = ApiService.getIdUsuarioLogado();
-        if (!idUsuario) return alert('Faça login para salvar publicações.');
+        if (!idUsuario) return this.mostrarFeedbackGlobal('Faça login para salvar publicações.');
         const salvo = this.postEstaSalvo(idPost);
         const resposta = salvo
             ? await ApiService.removerPostSalvo(salvo.id)
             : await ApiService.salvarPost(idUsuario, idPost);
-        if (!resposta.ok) return alert('Não foi possível atualizar os salvos.');
+        if (!resposta.ok) return this.mostrarFeedbackGlobal('Não foi possível atualizar os salvos.');
         this.postsSalvos = salvo ? this.postsSalvos.filter(item => item.id !== salvo.id) : [...this.postsSalvos, await resposta.json()];
         this.renderizarFeedGeral();
         if (
@@ -2998,16 +3007,16 @@ class AppController {
         const imagens = [...(inputImagens?.files || [])];
         const botaoPublicar = document.getElementById('post-publicar-btn');
 
-        if (!idLogado) return alert('Entre para publicar.');
-        if (imagens.length > 4) return alert('Escolha no máximo quatro imagens.');
+        if (!idLogado) return this.mostrarFeedbackGlobal('Entre para publicar.');
+        if (imagens.length > 4) return this.mostrarFeedbackGlobal('Escolha no máximo quatro imagens.');
         if (imagens.some(imagem => !['image/jpeg', 'image/png', 'image/webp'].includes(imagem.type))) {
-            return alert('Use imagens JPG, PNG ou WEBP.');
+            return this.mostrarFeedbackGlobal('Use imagens JPG, PNG ou WEBP.');
         }
         if (imagens.some(imagem => imagem.size > 5 * 1024 * 1024)) {
-            return alert('Cada imagem deve ter no máximo 5 MB.');
+            return this.mostrarFeedbackGlobal('Cada imagem deve ter no máximo 5 MB.');
         }
         if (imagens.length && typeof ApiService.enviarImagemPost !== 'function') {
-            return alert('Atualize a página para habilitar o envio de imagens.');
+            return this.mostrarFeedbackGlobal('Atualize a página para habilitar o envio de imagens.');
         }
 
         if (botaoPublicar) {
@@ -3023,7 +3032,7 @@ class AppController {
                 comunidadeSelecionada || null
             );
             if (!resposta.ok) {
-                return alert('Não foi possível publicar o post.');
+                return this.mostrarFeedbackGlobal('Não foi possível publicar o post.');
             }
 
             const post = await resposta.json();
@@ -3050,11 +3059,11 @@ class AppController {
             await this.carregarDadosGlobais();
 
             if (falhasUpload.length) {
-                alert(`O post foi publicado, mas ${falhasUpload.length} imagem(ns) não foram enviadas:\n${falhasUpload.join('\n')}`);
+                this.mostrarFeedbackGlobal(`O post foi publicado, mas ${falhasUpload.length} imagem(ns) não foram enviadas:\n${falhasUpload.join('\n')}`);
             }
         } catch (erro) {
             console.error('Erro ao publicar post:', erro);
-            alert('Não foi possível publicar. Verifique a conexão e tente novamente.');
+            this.mostrarFeedbackGlobal('Não foi possível publicar. Verifique a conexão e tente novamente.');
         } finally {
             if (botaoPublicar) {
                 botaoPublicar.disabled = false;
@@ -3066,11 +3075,11 @@ class AppController {
     previsualizarFotoPerfil(foto) {
         if (!foto) return;
         if (!['image/jpeg', 'image/png', 'image/webp'].includes(foto.type)) {
-            alert('Use uma foto JPG, PNG ou WEBP.');
+            this.mostrarFeedbackGlobal('Use uma foto JPG, PNG ou WEBP.');
             return;
         }
         if (foto.size > 5 * 1024 * 1024) {
-            alert('A foto deve ter no máximo 5 MB.');
+            this.mostrarFeedbackGlobal('A foto deve ter no máximo 5 MB.');
             return;
         }
 
@@ -3123,7 +3132,7 @@ class AppController {
 
         const vagas = Math.max(0, 4 - this.imagensPostSelecionadas.length);
         if (novasUnicas.length > vagas) {
-            alert('Cada publicação aceita até quatro imagens. As primeiras disponíveis foram adicionadas.');
+            this.mostrarFeedbackGlobal('Cada publicação aceita até quatro imagens. As primeiras disponíveis foram adicionadas.');
         }
         this.imagensPostSelecionadas.push(...novasUnicas.slice(0, vagas));
 
@@ -3209,14 +3218,14 @@ class AppController {
         const idLogado = ApiService.getIdUsuarioLogado();
 
         if (!idLogado) {
-            return alert("Faça login primeiro!");
+            return this.mostrarFeedbackGlobal("Faça login primeiro!");
         }
 
         const input = botao.previousElementSibling;
         const conteudo = input.value.trim();
 
         if (!conteudo) {
-            return alert("Digite um comentário antes de enviar.");
+            return this.mostrarFeedbackGlobal("Digite um comentário antes de enviar.");
         }
 
         const res = await ApiService.criarComentario(
@@ -3228,7 +3237,7 @@ class AppController {
         if (res.ok) {
             await this.carregarDadosGlobais();
         } else {
-            alert("Não foi possível enviar o comentário.");
+            this.mostrarFeedbackGlobal("Não foi possível enviar o comentário.");
         }
     }
 
@@ -3408,7 +3417,7 @@ ${ApiService.getIdUsuarioLogado() ? `
             try {
                 post = await ApiService.buscarPostPorId(idPost);
             } catch (erro) {
-                return alert('Não foi possível abrir a publicação.');
+                return this.mostrarFeedbackGlobal('Não foi possível abrir a publicação.');
             }
         }
 
@@ -3572,7 +3581,7 @@ ${ApiService.getIdUsuarioLogado() ? `
         const conteudo = input.value.trim();
         if (!conteudo) return;
         const resposta = await ApiService.criarComentario(conteudo, ApiService.getIdUsuarioLogado(), idPost);
-        if (!resposta.ok) return alert('Não foi possível enviar o comentário.');
+        if (!resposta.ok) return this.mostrarFeedbackGlobal('Não foi possível enviar o comentário.');
         await this.carregarDadosGlobais();
         await this.abrirDetalhesPost(idPost);
     }
@@ -4326,11 +4335,23 @@ ${ApiService.getIdUsuarioLogado() ? `
         if (!container) return;
         const idUsuario = ApiService.getIdUsuarioLogado();
         if (!idUsuario) {
-            container.innerHTML = '<div class="evento-destaque-vazio">Entre para salvar eventos na sua agenda.</div>';
+            container.innerHTML = `
+                <div class="agenda-empty-state">
+                    <span class="agenda-empty-icon"><i class="material-icons">bookmark_border</i></span>
+                    <h2>Sua agenda começa aqui</h2>
+                    <p>Entre na sua conta para guardar eventos e encontrá-los facilmente depois.</p>
+                    <button class="btn-primary" onclick="app.abrirModal('auth-modal')">Entrar na conta</button>
+                </div>
+            `;
             return;
         }
 
-        container.textContent = 'Carregando agenda...';
+        container.innerHTML = `
+            <div class="agenda-loading-state">
+                <span class="agenda-loading-spinner" aria-hidden="true"></span>
+                <span>Carregando seus eventos...</span>
+            </div>
+        `;
         try {
             const eventos = await ApiService.listarAgendaEventos(idUsuario);
             const futuros = eventos
@@ -4343,33 +4364,62 @@ ${ApiService.getIdUsuarioLogado() ? `
                     - new Date(`${b.dataEvento}T${b.horarioInicio || '00:00'}`));
 
             if (!futuros.length) {
-                container.innerHTML = '<div class="evento-destaque-vazio">Sua agenda ainda não tem eventos futuros salvos.</div>';
+                container.innerHTML = `
+                    <div class="agenda-empty-state">
+                        <span class="agenda-empty-icon"><i class="material-icons">event_available</i></span>
+                        <h2>Agenda livre por enquanto</h2>
+                        <p>Explore os próximos encontros e salve os que despertarem seu interesse.</p>
+                        <button class="btn-primary" onclick="app.mudarAba('eventos')">Descobrir eventos</button>
+                    </div>
+                `;
                 return;
             }
 
             container.innerHTML = futuros.map(evento => `
-                <article class="agenda-evento-item">
-                    <div>
-                        <strong>${this.escaparHtmlDestaque(evento.titulo || 'Evento')}</strong>
-                        <span>${this.escaparHtmlDestaque(this.formatarDataEvento(evento.dataEvento))}
-                            · ${this.escaparHtmlDestaque(evento.horarioInicio?.substring(0, 5) || '--:--')}
-                            · ${this.escaparHtmlDestaque(evento.localEvento || 'Local a confirmar')}</span>
+                <article class="agenda-evento-card">
+                    <div class="agenda-evento-data" aria-label="${this.escaparHtmlDestaque(this.formatarDataEvento(evento.dataEvento))}">
+                        <span>${new Date(`${evento.dataEvento}T00:00:00`).toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '')}</span>
+                        <strong>${new Date(`${evento.dataEvento}T00:00:00`).getDate()}</strong>
+                    </div>
+                    <div class="agenda-evento-conteudo">
+                        <div class="agenda-evento-etiquetas">
+                            <span class="agenda-evento-categoria">${this.escaparHtmlDestaque(evento.categoria || 'Evento')}</span>
+                            <span class="agenda-evento-salvo"><i class="material-icons" aria-hidden="true">bookmark</i> Na agenda</span>
+                        </div>
+                        <h2>${this.escaparHtmlDestaque(evento.titulo || 'Evento')}</h2>
+                        <div class="agenda-evento-detalhes">
+                            <span><i class="material-icons" aria-hidden="true">event</i>${this.escaparHtmlDestaque(this.formatarDataEvento(evento.dataEvento))}</span>
+                            <span><i class="material-icons" aria-hidden="true">schedule</i>${this.escaparHtmlDestaque(evento.horarioInicio?.substring(0, 5) || '--:--')}</span>
+                            <span><i class="material-icons" aria-hidden="true">place</i>${this.escaparHtmlDestaque(evento.localEvento || 'Local a confirmar')}</span>
+                        </div>
                     </div>
                     <div class="agenda-evento-acoes">
-                        <button class="btn-secondary" onclick="app.abrirDetalhesEvento(${Number(evento.id)})">Detalhes</button>
-                        <button class="btn-ghost" onclick="app.removerEventoDaAgenda(${Number(evento.id)})">Remover</button>
+                        <button class="agenda-action agenda-action-details" onclick="app.abrirDetalhesEvento(${Number(evento.id)})">
+                            <i class="material-icons" aria-hidden="true">open_in_new</i><span>Detalhes</span>
+                        </button>
+                        <button class="agenda-action agenda-action-remove" aria-label="Remover ${this.escaparHtmlDestaque(evento.titulo || 'evento')} da agenda"
+                            onclick="app.removerEventoDaAgenda(${Number(evento.id)})">
+                            <i class="material-icons" aria-hidden="true">bookmark_remove</i><span>Remover</span>
+                        </button>
                     </div>
                 </article>
             `).join('');
         } catch (erro) {
             console.error('Erro ao carregar agenda de eventos:', erro);
-            container.innerHTML = '<div class="evento-destaque-vazio">Não foi possível carregar sua agenda.</div>';
+            container.innerHTML = `
+                <div class="agenda-empty-state agenda-error-state">
+                    <span class="agenda-empty-icon"><i class="material-icons">error_outline</i></span>
+                    <h2>Não foi possível carregar sua agenda</h2>
+                    <p>Verifique sua conexão e tente novamente.</p>
+                    <button class="btn-secondary" onclick="app.carregarAgendaEventos()">Tentar novamente</button>
+                </div>
+            `;
         }
     }
 
     async alternarEventoNaAgenda(idEvento, salvo) {
         const idUsuario = ApiService.getIdUsuarioLogado();
-        if (!idUsuario) return alert('Entre para salvar eventos na sua agenda.');
+        if (!idUsuario) return this.mostrarFeedbackGlobal('Entre para salvar eventos na sua agenda.');
 
         try {
             const resposta = salvo
@@ -4412,7 +4462,7 @@ ${ApiService.getIdUsuarioLogado() ? `
 
     async exportarAgendaIcs() {
         const idUsuario = ApiService.getIdUsuarioLogado();
-        if (!idUsuario) return alert('Entre para exportar sua agenda.');
+        if (!idUsuario) return this.mostrarFeedbackGlobal('Entre para exportar sua agenda.');
         try {
             const eventos = await ApiService.listarAgendaEventos(idUsuario);
             const icsEscape = valor => String(valor || '')
@@ -4542,7 +4592,7 @@ ${ApiService.getIdUsuarioLogado() ? `
 
     async entrarNaListaEsperaEvento(idEvento, sair = false) {
         const idUsuario = ApiService.getIdUsuarioLogado();
-        if (!idUsuario) return alert('Entre para entrar na lista de espera.');
+        if (!idUsuario) return this.mostrarFeedbackGlobal('Entre para entrar na lista de espera.');
         try {
             const resposta = sair
                 ? await ApiService.sairDaListaEspera(idEvento, idUsuario)
@@ -4773,7 +4823,7 @@ ${ApiService.getIdUsuarioLogado() ? `
                 this.fecharModal('evento-modal');
                 this.limparFormularioEvento();
                 await this.carregarEventos();
-                alert(capa && !bannerEnviado
+                this.mostrarFeedbackGlobal(capa && !bannerEnviado
                     ? "Evento publicado, mas o banner não foi enviado. Você pode tentar novamente editando o evento."
                     : "🎉 Evento publicado com sucesso!");
             } else {
@@ -4846,7 +4896,7 @@ ${ApiService.getIdUsuarioLogado() ? `
             }
 
         } else {
-            alert("Você não tem permissão para editar esta comunidade.");
+            this.mostrarFeedbackGlobal("Você não tem permissão para editar esta comunidade.");
         }
     }
 
@@ -4986,7 +5036,7 @@ ${ApiService.getIdUsuarioLogado() ? `
 
             await navigator.clipboard.writeText(link);
 
-            alert('Link da publicação copiado!');
+            this.mostrarFeedbackGlobal('Link da publicação copiado!');
 
         } catch (erro) {
 
@@ -4995,10 +5045,48 @@ ${ApiService.getIdUsuarioLogado() ? `
                 erro
             );
 
-            prompt(
-                'Copie o link da publicação:',
-                link
-            );
+            this.abrirModalCompartilharLink(link);
+        }
+    }
+
+    abrirModalCompartilharLink(link) {
+        const campoLink = document.getElementById('post-link-compartilhado');
+        if (!campoLink) {
+            this.mostrarFeedbackGlobal('Não foi possível exibir o link da publicação.', 'error');
+            return;
+        }
+
+        campoLink.value = link;
+        this.abrirModal('compartilhar-link-modal');
+        setTimeout(() => {
+            campoLink.focus();
+            campoLink.select();
+        }, 0);
+    }
+
+    async copiarLinkCompartilhado() {
+        const campoLink = document.getElementById('post-link-compartilhado');
+        if (!campoLink) return;
+
+        try {
+            await navigator.clipboard.writeText(campoLink.value);
+            this.fecharModal('compartilhar-link-modal');
+            this.mostrarFeedbackGlobal('Link da publicação copiado!', 'success');
+        } catch (erro) {
+            campoLink.focus();
+            campoLink.select();
+
+            try {
+                if (document.execCommand('copy')) {
+                    this.fecharModal('compartilhar-link-modal');
+                    this.mostrarFeedbackGlobal('Link da publicação copiado!', 'success');
+                } else {
+                    this.mostrarFeedbackGlobal('O link está selecionado. Copie usando Ctrl+C.', 'info');
+                }
+            } catch (erroCopia) {
+                console.error('Não foi possível copiar o link:', erroCopia || erro);
+                this.mostrarFeedbackGlobal('O link está selecionado. Copie usando Ctrl+C.', 'info');
+            }
         }
     }
 
@@ -5173,7 +5261,7 @@ ${ApiService.getIdUsuarioLogado() ? `
             !horarioFim ||
             !localEvento
         ) {
-            return alert(
+            return this.mostrarFeedbackGlobal(
                 "Preencha título, data, horário de início, horário de fim e local."
             );
         }
@@ -5187,13 +5275,13 @@ ${ApiService.getIdUsuarioLogado() ? `
         );
 
         if (fimEvento <= inicioEvento) {
-            return alert(
+            return this.mostrarFeedbackGlobal(
                 "O horário de fim deve ser depois do horário de início."
             );
         }
 
         if (!Number.isFinite(precoIngresso) || precoIngresso < 0) {
-            return alert("O valor do ingresso não pode ser negativo.");
+            return this.mostrarFeedbackGlobal("O valor do ingresso não pode ser negativo.");
         }
 
         if (encerramentoInscricoes) {
@@ -5202,7 +5290,7 @@ ${ApiService.getIdUsuarioLogado() ? `
                 new Date(encerramentoInscricoes);
 
             if (fimInscricoes > inicioEvento) {
-                return alert(
+                return this.mostrarFeedbackGlobal(
                     "O encerramento das inscrições não pode acontecer depois do início do evento."
                 );
             }
@@ -5352,7 +5440,7 @@ ${ApiService.getIdUsuarioLogado() ? `
         const idUsuario = ApiService.getIdUsuarioLogado();
 
         if (!idUsuario) {
-            return alert("Faça login para participar do evento.");
+            return this.mostrarFeedbackGlobal("Faça login para participar do evento.");
         }
 
         try {
@@ -5722,38 +5810,41 @@ ${ApiService.getIdUsuarioLogado() ? `
                     await ApiService.buscarEventoPorId(idEvento);
             } catch (erro) {
                 console.error(erro);
-                return alert("Não foi possível abrir este evento.");
+                return this.mostrarFeedbackGlobal("Não foi possível abrir este evento.");
             }
         }
 
-        let participantes;
+        const idUsuarioLogado = ApiService.getIdUsuarioLogado();
+        let quantidadeParticipantes = 0;
+        let usuarioParticipa = false;
         let eventoSalvo = false;
         let usuarioNaListaEspera = false;
         try {
-            participantes = await ApiService.listarParticipantesEvento(idEvento);
-            const idUsuario = ApiService.getIdUsuarioLogado();
-            if (idUsuario) {
-                [eventoSalvo, usuarioNaListaEspera] = await Promise.all([
-                    ApiService.estaEventoSalvo(idEvento, idUsuario),
-                    ApiService.estaNaListaEspera(idEvento, idUsuario)
-                ]);
+            const requisicoes = [
+                ApiService.contarParticipantesEvento(idEvento)
+            ];
+            if (idUsuarioLogado) {
+                requisicoes.push(
+                    ApiService.listarEventosParticipando(idUsuarioLogado),
+                    ApiService.estaEventoSalvo(idEvento, idUsuarioLogado),
+                    ApiService.estaNaListaEspera(idEvento, idUsuarioLogado)
+                );
             }
+
+            const [totalParticipantes, eventosParticipando = [], salvo = false, naListaEspera = false] =
+                await Promise.all(requisicoes);
+            quantidadeParticipantes = Number(totalParticipantes) || 0;
+            eventoSalvo = salvo;
+            usuarioNaListaEspera = naListaEspera;
+            usuarioParticipa = eventosParticipando.some(
+                eventoParticipando => (eventoParticipando.idEvento || eventoParticipando.id) == idEvento
+            );
         } catch (erro) {
             console.error('Erro ao carregar inscrições do evento:', erro);
             this.mostrarFeedbackGlobal(erro.message || 'Não foi possível carregar as informações do evento.');
             return;
         }
 
-        const quantidadeParticipantes = participantes.length;
-
-        const idUsuarioLogado =
-            ApiService.getIdUsuarioLogado();
-
-        const usuarioParticipa =
-            idUsuarioLogado &&
-            participantes.some(
-                p => p.usuarioId == idUsuarioLogado
-            );
         const ehCriador =
             idUsuarioLogado &&
             idUsuarioLogado == evento.criadorId;
@@ -6545,7 +6636,7 @@ ${ApiService.getIdUsuarioLogado() ? `
         } catch (erro) {
 
             console.error(erro);
-            alert("Não foi possível carregar o perfil.");
+            this.mostrarFeedbackGlobal("Não foi possível carregar o perfil.");
         }
 
     }
@@ -6556,7 +6647,7 @@ ${ApiService.getIdUsuarioLogado() ? `
             ApiService.getIdUsuarioLogado();
 
         if (!idUsuario) {
-            return alert("Faça login primeiro.");
+            return this.mostrarFeedbackGlobal("Faça login primeiro.");
         }
 
         await this.abrirPerfil(idUsuario);
@@ -6627,7 +6718,7 @@ ${ApiService.getIdUsuarioLogado() ? `
         } catch (erro) {
 
             console.error(erro);
-            alert("Não foi possível carregar os dados do perfil.");
+            this.mostrarFeedbackGlobal("Não foi possível carregar os dados do perfil.");
         }
     }
 
@@ -6656,15 +6747,15 @@ ${ApiService.getIdUsuarioLogado() ? `
             ).value.trim();
 
         if (!nome) {
-            return alert("O nome não pode ficar vazio.");
+            return this.mostrarFeedbackGlobal("O nome não pode ficar vazio.");
         }
 
         if (!username) {
-            return alert("O username não pode ficar vazio.");
+            return this.mostrarFeedbackGlobal("O username não pode ficar vazio.");
         }
 
         if (bio.length > 300) {
-            return alert(
+            return this.mostrarFeedbackGlobal(
                 "A bio pode ter no máximo 300 caracteres."
             );
         }
@@ -6680,7 +6771,7 @@ ${ApiService.getIdUsuarioLogado() ? `
                 );
 
             if (!resposta.ok) {
-                return alert(
+                return this.mostrarFeedbackGlobal(
                     "Não foi possível atualizar o perfil."
                 );
             }
@@ -6699,13 +6790,13 @@ ${ApiService.getIdUsuarioLogado() ? `
             // Renderiza novamente o perfil já atualizado
             await this.abrirPerfil(idUsuario);
 
-            alert("Perfil atualizado com sucesso!");
+            this.mostrarFeedbackGlobal("Perfil atualizado com sucesso!");
 
         } catch (erro) {
 
             console.error(erro);
 
-            alert(
+            this.mostrarFeedbackGlobal(
                 "Erro de conexão ao atualizar o perfil."
             );
         }
@@ -7235,7 +7326,7 @@ ${ApiService.getIdUsuarioLogado() ? `
             );
 
         if (!comunidade) {
-            return alert("Comunidade não encontrada.");
+            return this.mostrarFeedbackGlobal("Comunidade não encontrada.");
         }
 
         this.entrarSubreddit(
@@ -7256,15 +7347,15 @@ ${ApiService.getIdUsuarioLogado() ? `
         const foto = input?.files?.[0];
 
         if (!foto) {
-            return alert("Selecione uma imagem.");
+            return this.mostrarFeedbackGlobal("Selecione uma imagem.");
         }
 
         if (!['image/jpeg', 'image/png', 'image/webp'].includes(foto.type)) {
-            return alert("Use uma foto JPG, PNG ou WEBP.");
+            return this.mostrarFeedbackGlobal("Use uma foto JPG, PNG ou WEBP.");
         }
 
         if (foto.size > 5 * 1024 * 1024) {
-            return alert("A imagem deve ter no máximo 5 MB.");
+            return this.mostrarFeedbackGlobal("A imagem deve ter no máximo 5 MB.");
         }
         try {
             const resposta =
@@ -7279,7 +7370,7 @@ ${ApiService.getIdUsuarioLogado() ? `
 
                 console.error("Resposta do backend:", erro);
 
-                return alert(
+                return this.mostrarFeedbackGlobal(
                     "Não foi possível alterar a foto."
                 );
             }
@@ -7314,7 +7405,7 @@ ${ApiService.getIdUsuarioLogado() ? `
             this.atualizarMenuLateral();
             this.renderizarFeedGeral();
 
-            alert("Foto alterada com sucesso!");
+            this.mostrarFeedbackGlobal("Foto alterada com sucesso!");
         } catch (erro) {
 
             console.error(
@@ -7322,7 +7413,7 @@ ${ApiService.getIdUsuarioLogado() ? `
                 erro
             );
 
-            alert("Erro ao enviar a foto.");
+            this.mostrarFeedbackGlobal("Erro ao enviar a foto.");
         }
     }
 
@@ -7630,7 +7721,7 @@ ${ApiService.getIdUsuarioLogado() ? `
                 erro
             );
 
-            alert(
+            this.mostrarFeedbackGlobal(
                 erro.message ||
                 'Não foi possível enviar a mensagem.'
             );
@@ -7648,7 +7739,7 @@ ${ApiService.getIdUsuarioLogado() ? `
             ApiService.getIdUsuarioLogado();
 
         if (!idUsuario) {
-            alert('Você precisa estar logado para enviar mensagens.');
+            this.mostrarFeedbackGlobal('Você precisa estar logado para enviar mensagens.');
             return;
         }
 
@@ -7675,7 +7766,7 @@ ${ApiService.getIdUsuarioLogado() ? `
                 erro
             );
 
-            alert(
+            this.mostrarFeedbackGlobal(
                 erro.message ||
                 'Não foi possível iniciar a conversa.'
             );
@@ -7705,6 +7796,7 @@ ${ApiService.getIdUsuarioLogado() ? `
         const url = new URL('/ws/chat', ApiService.API_URL);
         url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
         url.searchParams.set('usuarioId', idUsuario);
+        url.searchParams.set('token', ApiService.getAuthToken());
 
         const socket = new WebSocket(url);
         this.chatSocket = socket;
@@ -8430,6 +8522,18 @@ ${ApiService.getIdUsuarioLogado() ? `
         this.renderizarItensSalvos();
     }
 
+    abrirMinhaAgenda() {
+        if (!ApiService.getUsuarioLogado()) {
+            this.mostrarFeedbackGlobal('Entre na sua conta para acessar sua agenda.');
+            return;
+        }
+
+        const menuConta = document.querySelector('.account-menu');
+        menuConta?.classList.remove('open');
+        menuConta?.querySelector('.account-trigger')?.setAttribute('aria-expanded', 'false');
+        this.ativarAba('agenda');
+    }
+
     renderizarItensSalvos() {
 
         const container =
@@ -8555,7 +8659,7 @@ ${ApiService.getIdUsuarioLogado() ? `
                 evento = await ApiService.buscarEventoPorId(idEvento);
             } catch (erro) {
                 console.error(erro);
-                return alert(
+                return this.mostrarFeedbackGlobal(
                     "Não foi possível carregar os dados do evento."
                 );
             }
@@ -8594,7 +8698,7 @@ ${ApiService.getIdUsuarioLogado() ? `
         } catch (erro) {
             console.error('Erro ao calcular total da compra:', erro);
             this.eventoCompraId = null;
-            alert('Não foi possível calcular o valor total do ingresso.');
+            this.mostrarFeedbackGlobal('Não foi possível calcular o valor total do ingresso.');
         }
     }
 
@@ -8614,7 +8718,7 @@ ${ApiService.getIdUsuarioLogado() ? `
 
             this.eventoCompraId = null;
 
-            alert(
+            this.mostrarFeedbackGlobal(
                 "Compra simulada concluída! Seu ingresso foi registrado."
             );
 
@@ -8625,7 +8729,7 @@ ${ApiService.getIdUsuarioLogado() ? `
                 erro
             );
 
-            alert(
+            this.mostrarFeedbackGlobal(
                 "Não foi possível concluir a compra do ingresso."
             );
         }
@@ -8685,16 +8789,60 @@ ${ApiService.getIdUsuarioLogado() ? `
         this.abrirModal('modal-confirmacao');
     }
 
-    mostrarFeedbackGlobal(mensagem) {
-        // Exibe alertas amigáveis sem bloquear a execução da UI
-        const feedbackEl = document.getElementById('global-feedback');
-        if (feedbackEl) {
-            feedbackEl.innerText = mensagem;
-            feedbackEl.classList.add('visible');
-            setTimeout(() => feedbackEl.classList.remove('visible'), 4000);
-        } else {
-            alert(mensagem);
-        }
+    mostrarFeedbackGlobal(mensagem, tipo = null) {
+        const container = document.getElementById('toast-container');
+        const texto = String(mensagem || '').trim();
+        if (!container || !texto) return;
+
+        const textoNormalizado = texto
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase();
+        const categoria = tipo || (
+            /sucesso|salv[oa]|copiad[oa]|publicad[oa]|atualizad[oa]|excluid[oa]|removid[oa]|cancelad[oa]/.test(textoNormalizado)
+                ? 'success'
+                : /nao foi possivel|erro|falha|sem permissao|nao tem permissao/.test(textoNormalizado)
+                    ? 'error'
+                    : /login|entre para|selecione|escolha|digite|nao pode|maximo|verifique|obrigatorio|nao participa/.test(textoNormalizado)
+                        ? 'warning'
+                        : 'info'
+        );
+        const icones = {
+            success: 'check_circle',
+            error: 'error',
+            warning: 'warning',
+            info: 'info'
+        };
+
+        const aviso = document.createElement('div');
+        aviso.className = `app-toast app-toast-${categoria}`;
+        aviso.setAttribute('role', categoria === 'error' ? 'alert' : 'status');
+
+        const icone = document.createElement('i');
+        icone.className = 'material-icons app-toast-icon';
+        icone.setAttribute('aria-hidden', 'true');
+        icone.textContent = icones[categoria] || icones.info;
+
+        const conteudo = document.createElement('p');
+        conteudo.className = 'app-toast-message';
+        conteudo.textContent = texto;
+
+        const fechar = document.createElement('button');
+        fechar.type = 'button';
+        fechar.className = 'app-toast-close';
+        fechar.setAttribute('aria-label', 'Fechar aviso');
+        fechar.innerHTML = '<i class="material-icons" aria-hidden="true">close</i>';
+
+        let temporizador;
+        const remover = () => {
+            clearTimeout(temporizador);
+            aviso.classList.add('app-toast-saindo');
+            setTimeout(() => aviso.remove(), 220);
+        };
+        fechar.addEventListener('click', remover);
+        aviso.append(icone, conteudo, fechar);
+        container.appendChild(aviso);
+        temporizador = setTimeout(remover, 5000);
     }
 }
 

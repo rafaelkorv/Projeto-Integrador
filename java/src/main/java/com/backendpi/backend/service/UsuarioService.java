@@ -25,6 +25,7 @@ public class UsuarioService {
     }
 
     public Usuario salvar(Usuario usuario) {
+        usuario.setIdUsuario(null);
         if ((usuario.getEmail() == null
                 || usuario.getEmail().trim().isEmpty())
                 && (usuario.getTelefone() == null

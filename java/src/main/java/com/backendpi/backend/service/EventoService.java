@@ -14,14 +14,17 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.backendpi.backend.dto.EventoResumoDTO;
 import com.backendpi.backend.model.Evento;
 import com.backendpi.backend.repository.EventoRepository;
 import com.backendpi.backend.repository.EventoListaEsperaRepository;
 import com.backendpi.backend.repository.ParticipacaoEventoRepository;
+import com.backendpi.backend.security.AuthenticatedUserContext;
 
 @Service
 public class EventoService {
@@ -59,6 +62,7 @@ public class EventoService {
     }
 
     public List<Evento> listarPorParticipante(Long idUsuario) {
+        AuthenticatedUserContext.requireMatches(idUsuario);
         return participacaoEventoRepository.findByUsuarioId(idUsuario)
                 .stream()
                 .map(participacao -> eventoRepository.findById(participacao.getEventoId()))
@@ -81,6 +85,7 @@ public class EventoService {
         if (evento.getCriadorId() == null) {
             throw new RuntimeException("O evento precisa ter um criador");
         }
+        AuthenticatedUserContext.requireMatches(evento.getCriadorId());
 
         if (evento.getPrecoIngresso() != null
                 && evento.getPrecoIngresso().signum() < 0) {
@@ -113,12 +118,14 @@ public class EventoService {
 
     @Transactional
     public void deletar(Long idEvento, Long idUsuario) {
+        AuthenticatedUserContext.requireMatches(idUsuario);
 
         Evento evento = eventoRepository.findById(idEvento)
                 .orElseThrow(() -> new RuntimeException("Evento não encontrado"));
 
         if (!evento.getCriadorId().equals(idUsuario)) {
-            throw new RuntimeException(
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
                     "Usuário sem permissão para excluir este evento"
             );
         }
@@ -146,12 +153,14 @@ public class EventoService {
             Long idEvento,
             Long idUsuario,
             Evento novo) {
+        AuthenticatedUserContext.requireMatches(idUsuario);
 
         Evento evento = eventoRepository.findByIdForUpdate(idEvento)
                 .orElseThrow(() -> new RuntimeException("Evento não encontrado"));
 
         if (!evento.getCriadorId().equals(idUsuario)) {
-            throw new RuntimeException(
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
                     "Usuário sem permissão para editar este evento"
             );
         }
@@ -218,12 +227,14 @@ public class EventoService {
 
     @Transactional
     public Evento cancelar(Long idEvento, Long idUsuario) {
+        AuthenticatedUserContext.requireMatches(idUsuario);
 
         Evento evento = eventoRepository.findByIdForUpdate(idEvento)
                 .orElseThrow(() -> new RuntimeException("Evento não encontrado"));
 
         if (!evento.getCriadorId().equals(idUsuario)) {
-            throw new RuntimeException(
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
                     "Usuário sem permissão para cancelar este evento"
             );
         }

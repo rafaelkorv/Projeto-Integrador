@@ -12,6 +12,9 @@ import com.backendpi.backend.repository.ConversaRepository;
 import com.backendpi.backend.repository.MensagemRepository;
 import com.backendpi.backend.repository.UsuarioRepository;
 import com.backendpi.backend.websocket.ChatWebSocketHandler;
+import com.backendpi.backend.security.AuthenticatedUserContext;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import tools.jackson.databind.ObjectMapper;
 
@@ -43,6 +46,7 @@ public class MensagemService {
             Long idRemetente,
             String conteudo
     ) {
+        AuthenticatedUserContext.requireMatches(idRemetente);
 
         if (conteudo == null || conteudo.trim().isEmpty()) {
             throw new RuntimeException(
@@ -75,7 +79,8 @@ public class MensagemService {
                         .equals(idRemetente);
 
         if (!participaDaConversa) {
-            throw new RuntimeException(
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
                     "Usuário não participa desta conversa."
             );
         }
@@ -132,6 +137,13 @@ public class MensagemService {
     public List<MensagemDTO> listarMensagens(
             Long idConversa
     ) {
+        Long idUsuario = AuthenticatedUserContext.requireUserId();
+        Conversa conversa = conversaRepository.findById(idConversa)
+                .orElseThrow(() -> new RuntimeException("Conversa não encontrada."));
+        if (!conversa.getUsuario1().getIdUsuario().equals(idUsuario)
+                && !conversa.getUsuario2().getIdUsuario().equals(idUsuario)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Usuário não participa desta conversa.");
+        }
 
         return mensagemRepository
                 .findByConversa_IdConversaOrderByDataEnvioAsc(
