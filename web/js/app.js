@@ -4462,6 +4462,9 @@ ${ApiService.getIdUsuarioLogado() ? `
     async carregarNotificacoesEventos() {
         const container = document.getElementById('notificacoes-container');
         const contador = document.getElementById('notificacoes-nao-lidas');
+        const notificacoesAbertas = document
+            .getElementById('view-notificacoes')
+            ?.classList.contains('active');
         if (!container) return;
         const idUsuario = ApiService.getIdUsuarioLogado();
         if (!idUsuario) {
@@ -4471,7 +4474,32 @@ ${ApiService.getIdUsuarioLogado() ? `
         }
 
         try {
-            const notificacoes = await ApiService.listarNotificacoesEventos(idUsuario);
+            let notificacoes = await ApiService.listarNotificacoesEventos(idUsuario);
+            if (notificacoesAbertas) {
+                const exclusoesNaoLidas = notificacoes.filter(
+                    notificacao => notificacao.tipo === 'EVENTO_EXCLUIDO' && !notificacao.lida
+                );
+                if (exclusoesNaoLidas.length > 0) {
+                    try {
+                        const respostas = await Promise.all(exclusoesNaoLidas.map(
+                            notificacao => ApiService.marcarNotificacaoLida(notificacao.id, idUsuario)
+                        ));
+                        if (respostas.some(resposta => !resposta.ok)) {
+                            throw new Error('Uma ou mais notificações não puderam ser marcadas como lidas.');
+                        }
+                        const idsMarcados = new Set(exclusoesNaoLidas.map(notificacao => notificacao.id));
+                        notificacoes = notificacoes.map(notificacao => idsMarcados.has(notificacao.id)
+                            ? { ...notificacao, lida: true }
+                            : notificacao);
+                        notificacoes = await ApiService.listarNotificacoesEventos(idUsuario);
+                    } catch (erro) {
+                        console.error('Erro ao marcar notificações de eventos excluídos como lidas:', erro);
+                        this.mostrarFeedbackGlobal(
+                            'Não foi possível marcar as notificações de eventos excluídos como visualizadas.'
+                        );
+                    }
+                }
+            }
             const naoLidas = notificacoes.filter(notificacao => !notificacao.lida).length;
             if (contador) {
                 contador.textContent = naoLidas > 99 ? '99+' : String(naoLidas);

@@ -3,9 +3,11 @@ package com.backendpi.backend.service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
@@ -109,6 +111,7 @@ public class EventoService {
         return eventoRepository.save(evento);
     }
 
+    @Transactional
     public void deletar(Long idEvento, Long idUsuario) {
 
         Evento evento = eventoRepository.findById(idEvento)
@@ -119,6 +122,21 @@ public class EventoService {
                     "Usuário sem permissão para excluir este evento"
             );
         }
+
+        Set<Long> usuariosNotificados = new LinkedHashSet<>();
+        participacaoEventoRepository.findByEventoId(idEvento)
+                .forEach(participacao -> usuariosNotificados.add(participacao.getUsuarioId()));
+        listaEsperaRepository.findByEventoIdOrderByAdicionadoEmAscIdAsc(idEvento)
+                .forEach(entrada -> usuariosNotificados.add(entrada.getUsuarioId()));
+
+        String mensagem = "O evento \"" + evento.getTitulo()
+                + "\" foi excluído pelo organizador.";
+        usuariosNotificados.forEach(usuarioId -> notificacaoService.notificarUsuario(
+                usuarioId,
+                null,
+                "EVENTO_EXCLUIDO",
+                mensagem
+        ));
 
         eventoRepository.delete(evento);
     }
