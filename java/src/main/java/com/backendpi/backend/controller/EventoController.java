@@ -140,7 +140,6 @@ public class EventoController {
     @GetMapping("/buscar")
     public Page<EventoResumoDTO> buscarComFiltros(
             @RequestParam(required = false) String texto,
-            @RequestParam(required = false) String status,
             @RequestParam(required = false) String categoria,
             @RequestParam(required = false) Long comunidadeId,
             @RequestParam(required = false) Boolean pago,
@@ -148,6 +147,7 @@ public class EventoController {
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicio,
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFim,
+            @RequestParam(required = false) String formato,
             @RequestParam(required = false) Double lat,
         @RequestParam(required = false) Double lng,
         @RequestParam(required = false, defaultValue = "50") Double raioKm, // Raio padrão: 50km
@@ -156,12 +156,12 @@ public class EventoController {
 
         return eventoService.buscarComFiltros(
                 texto,
-                status,
                 categoria,
                 comunidadeId,
                 pago,
                 dataInicio,
                 dataFim,
+                formato,
                 lat,
                 lng,
                 raioKm,

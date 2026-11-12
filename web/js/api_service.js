@@ -330,12 +330,118 @@ export class ApiService {
         );
     }
 
+    static async mensagemErroResposta(resposta, mensagemPadrao) {
+        const corpo = await resposta.text();
+        if (/unknown column|doesn't exist|does not exist|no such table/i.test(corpo)) {
+            return 'O banco ainda não tem as alterações de eventos. Aplique as migrações pendentes em java/database/migrations e reinicie o backend.';
+        }
+
+        try {
+            const erro = JSON.parse(corpo);
+            if (typeof erro.message === 'string' && erro.message.trim()) {
+                return erro.message;
+            }
+        } catch {
+            if (corpo.trim()) return corpo.trim();
+        }
+
+        return mensagemPadrao;
+    }
+
+    static async entrarNaListaEspera(idEvento, idUsuario) {
+        return await fetch(
+            `${this.API_URL}/api/eventos/${idEvento}/lista-espera/${idUsuario}`,
+            { method: 'POST' }
+        );
+    }
+
+    static async sairDaListaEspera(idEvento, idUsuario) {
+        return await fetch(
+            `${this.API_URL}/api/eventos/${idEvento}/lista-espera/${idUsuario}`,
+            { method: 'DELETE' }
+        );
+    }
+
+    static async estaNaListaEspera(idEvento, idUsuario) {
+        const response = await fetch(
+            `${this.API_URL}/api/eventos/${idEvento}/lista-espera/usuario/${idUsuario}`
+        );
+        if (!response.ok) {
+            throw new Error(await this.mensagemErroResposta(response, 'Erro ao consultar lista de espera'));
+        }
+        return await response.json();
+    }
+
+    static async salvarEventoAgenda(idEvento, idUsuario) {
+        return await fetch(
+            `${this.API_URL}/api/eventos/${idEvento}/salvo/usuario/${idUsuario}`,
+            { method: 'POST' }
+        );
+    }
+
+    static async removerEventoAgenda(idEvento, idUsuario) {
+        return await fetch(
+            `${this.API_URL}/api/eventos/${idEvento}/salvo/usuario/${idUsuario}`,
+            { method: 'DELETE' }
+        );
+    }
+
+    static async estaEventoSalvo(idEvento, idUsuario) {
+        const response = await fetch(
+            `${this.API_URL}/api/eventos/${idEvento}/salvo/usuario/${idUsuario}`
+        );
+        if (!response.ok) {
+            throw new Error(await this.mensagemErroResposta(response, 'Erro ao consultar agenda'));
+        }
+        return await response.json();
+    }
+
+    static async listarAgendaEventos(idUsuario) {
+        const response = await fetch(`${this.API_URL}/api/eventos/agenda/${idUsuario}`);
+        if (!response.ok) throw new Error('Erro ao carregar agenda');
+        return await response.json();
+    }
+
+    static async listarNotificacoesEventos(idUsuario) {
+        const response = await fetch(`${this.API_URL}/api/notificacoes/usuario/${idUsuario}`);
+        if (!response.ok) throw new Error('Erro ao carregar notificações');
+        return await response.json();
+    }
+
+    static async marcarNotificacaoLida(idNotificacao, idUsuario) {
+        return await fetch(
+            `${this.API_URL}/api/notificacoes/${idNotificacao}/lida/usuario/${idUsuario}`,
+            { method: 'PUT' }
+        );
+    }
+
+    static async obterResumoOrganizador(idEvento, idUsuario) {
+        const response = await fetch(
+            `${this.API_URL}/api/eventos/${idEvento}/organizador/${idUsuario}/resumo`
+        );
+        if (!response.ok) throw new Error('Erro ao carregar indicadores do evento');
+        return await response.json();
+    }
+
+    static async exportarParticipantesEvento(idEvento, idUsuario) {
+        const response = await fetch(
+            `${this.API_URL}/api/eventos/${idEvento}/organizador/${idUsuario}/participantes.csv`
+        );
+        if (!response.ok) throw new Error('Erro ao exportar participantes');
+        return await response.blob();
+    }
+
     static async listarParticipantesEvento(idEvento) {
-        return await (
-            await fetch(
-                `${this.API_URL}/api/eventos/${idEvento}/participantes`
-            )
-        ).json();
+        const response = await fetch(
+            `${this.API_URL}/api/eventos/${idEvento}/participantes`
+        );
+        if (!response.ok) {
+            throw new Error(await this.mensagemErroResposta(
+                response,
+                'Não foi possível carregar as inscrições do evento.'
+            ));
+        }
+        return response.json();
     }
 
     static async contarParticipantesEvento(idEvento) {
@@ -374,12 +480,12 @@ export class ApiService {
 
     static async buscarEventos({
         texto = null,
-        status = null,
         categoria = null,
         comunidadeId = null,
         pago = null,
         dataInicio = null,
         dataFim = null,
+        formato = null,
         lat = null,       // <--- Novo: Latitude do usuário
         lng = null,       // <--- Novo: Longitude do usuário
         raioKm = 50,      // <--- Novo: Raio de busca em km (padrão 50km)
@@ -390,12 +496,12 @@ export class ApiService {
         const params = new URLSearchParams();
 
         if (texto) params.append("texto", texto);
-        if (status) params.append("status", status);
         if (categoria) params.append("categoria", categoria);
         if (comunidadeId) params.append("comunidadeId", comunidadeId);
         if (pago !== null) params.append("pago", String(pago));
         if (dataInicio) params.append("dataInicio", dataInicio);
         if (dataFim) params.append("dataFim", dataFim);
+        if (formato) params.append("formato", formato);
 
         // Envia a geolocalização se estiver disponível
         if (lat !== null && lng !== null) {

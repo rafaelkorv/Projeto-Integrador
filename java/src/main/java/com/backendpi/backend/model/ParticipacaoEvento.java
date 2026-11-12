@@ -33,6 +33,9 @@ public class ParticipacaoEvento {
     @Column(name = "data_checkin")
     private LocalDateTime dataCheckin;
 
+    @Column(name = "lembrete_enviado", nullable = false)
+    private boolean lembreteEnviado;
+
     public Long getId() {
         return id;
     }
@@ -79,5 +82,13 @@ public class ParticipacaoEvento {
 
     public void setDataCheckin(LocalDateTime dataCheckin) {
         this.dataCheckin = dataCheckin;
+    }
+
+    public boolean isLembreteEnviado() {
+        return lembreteEnviado;
+    }
+
+    public void setLembreteEnviado(boolean lembreteEnviado) {
+        this.lembreteEnviado = lembreteEnviado;
     }
 }

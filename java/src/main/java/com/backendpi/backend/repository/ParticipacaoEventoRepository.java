@@ -21,6 +21,8 @@ public interface ParticipacaoEventoRepository
 
     List<ParticipacaoEvento> findByUsuarioId(Long usuarioId);
 
+    List<ParticipacaoEvento> findByLembreteEnviadoFalse();
+
     void deleteByUsuarioIdAndEventoId(
             Long usuarioId,
             Long eventoId

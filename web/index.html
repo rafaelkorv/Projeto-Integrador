@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
         rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css?v=checkout-platform-fee-1">
+    <link rel="stylesheet" href="css/style.css?v=event-cycle-3">
 </head>
 
 <body>
@@ -83,6 +83,13 @@
                 </button>
                 <button class="nav-btn" id="tab-busca" onclick="app.mudarAba('busca')">
                     <i class="material-icons">people</i> Pessoas
+                </button>
+                <button class="nav-btn" id="tab-agenda" onclick="app.mudarAba('agenda')">
+                    <i class="material-icons">bookmark</i> Minha agenda
+                </button>
+                <button class="nav-btn" id="tab-notificacoes" onclick="app.mudarAba('notificacoes')">
+                    <i class="material-icons">notifications</i> Notificações
+                    <span id="notificacoes-nao-lidas" class="notificacoes-contador" hidden></span>
                 </button>
             </nav>
             <div class="sidebar-footer" id="header-buttons"></div>
@@ -327,6 +334,7 @@
                             <span class="section-kicker">Encontre sua turma</span>
                             <h1>Comunidades</h1>
                         </div>
+
                         <button class="btn-primary" onclick="app.abrirModal('comunidade-modal')">Nova
                             Comunidade</button>
                     </div>
@@ -357,6 +365,33 @@
                         </select>
                     </div>
                     <div id="comunidades-container" class="comunidades-grid">Carregando comunidades...</div>
+                </div>
+
+                <div id="view-agenda" class="view-section">
+                    <div class="page-header">
+                        <div>
+                            <span class="section-kicker">Seus próximos encontros</span>
+                            <h1>Minha agenda</h1>
+                        </div>
+                        <button class="btn-secondary" onclick="app.exportarAgendaIcs()">
+                            <i class="material-icons">calendar_month</i> Exportar calendário
+                        </button>
+                    </div>
+                    <div id="agenda-eventos-container" class="eventos-container">
+                        Carregando agenda...
+                    </div>
+                </div>
+
+                <div id="view-notificacoes" class="view-section">
+                    <div class="page-header">
+                        <div>
+                            <span class="section-kicker">Atualizações da sua comunidade</span>
+                            <h1>Notificações</h1>
+                        </div>
+                    </div>
+                    <div id="notificacoes-container" class="notificacoes-lista">
+                        Carregando notificações...
+                    </div>
                 </div>
 
                 <!-- PERFIL -->
@@ -1380,6 +1415,16 @@
             </div>
 
             <div id="editar-evento-feedback" class="form-feedback" role="alert" aria-live="polite"></div>
+            <section class="evento-organizador-resumo" aria-live="polite">
+                <div>
+                    <strong>Resumo do evento</strong>
+                    <span id="evento-organizador-indicadores">Carregando inscrições...</span>
+                </div>
+                <button type="button" class="btn-secondary"
+                    onclick="app.exportarParticipantesEvento()">
+                    <i class="material-icons">download</i> Exportar participantes
+                </button>
+            </section>
 
             <form id="form-editar-evento" onsubmit="event.preventDefault(); app.salvarEdicaoEvento();">
                 <div class="form-section">
@@ -1852,7 +1897,7 @@
 </div>
 
     <!-- type="module" permite importar ApiService; servir esta página por HTTP evita bloqueios de módulos em file://. -->
-    <script type="module" src="js/app.js?v=event-leave-confirmation-1"></script>
+    <script type="module" src="js/app.js?v=event-cycle-3"></script>
 </body>
 
 </html>

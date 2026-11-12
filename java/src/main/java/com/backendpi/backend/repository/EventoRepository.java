@@ -15,14 +15,18 @@ import com.backendpi.backend.model.Evento;
 @Repository
 public interface EventoRepository extends JpaRepository<Evento, Long> {
 
+    @Query(value = "SELECT * FROM eventos WHERE id_evento = :id FOR UPDATE", nativeQuery = true)
+    java.util.Optional<Evento> findByIdForUpdate(@Param("id") Long id);
+
     @Query("""
         SELECT e
         FROM Evento e
         WHERE
+            e.status <> 'CANCELADO'
+        AND
             (:texto IS NULL
              OR LOWER(e.titulo) LIKE LOWER(CONCAT('%', :texto, '%'))
              OR LOWER(e.descricao) LIKE LOWER(CONCAT('%', :texto, '%')))
-        AND (:status IS NULL OR e.status = :status)
         AND (
             :categoria IS NULL
             OR LOWER(TRIM(e.categoria)) = LOWER(TRIM(:categoria))
@@ -35,6 +39,23 @@ public interface EventoRepository extends JpaRepository<Evento, Long> {
         )
         AND (:dataInicio IS NULL OR e.dataEvento >= :dataInicio)
         AND (:dataFim IS NULL OR e.dataEvento <= :dataFim)
+        AND (
+            :formato IS NULL
+            OR (
+                :formato = 'online'
+                AND (
+                    LOWER(e.localEvento) LIKE 'http://%'
+                    OR LOWER(e.localEvento) LIKE 'https://%'
+                    OR LOWER(e.localEvento) LIKE 'www.%'
+                )
+            )
+            OR (
+                :formato = 'presencial'
+                AND LOWER(e.localEvento) NOT LIKE 'http://%'
+                AND LOWER(e.localEvento) NOT LIKE 'https://%'
+                AND LOWER(e.localEvento) NOT LIKE 'www.%'
+            )
+        )
         AND (
                :lat IS NULL OR :lng IS NULL OR :raioKm IS NULL OR
                (6371 * acos(
@@ -73,12 +94,12 @@ public interface EventoRepository extends JpaRepository<Evento, Long> {
         """)
     Page<Evento> buscarComFiltros(
             @Param("texto") String texto,
-            @Param("status") String status,
             @Param("categoria") String categoria,
             @Param("comunidadeId") Long comunidadeId,
             @Param("pago") Boolean pago,
             @Param("dataInicio") LocalDate dataInicio,
             @Param("dataFim") LocalDate dataFim,
+            @Param("formato") String formato,
             @Param("lat") Double lat,
         @Param("lng") Double lng,
         @Param("raioKm") Double raioKm,

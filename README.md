@@ -48,6 +48,7 @@ O backend utiliza MySQL. Configure o acesso ao banco no arquivo:
 
 Antes de iniciar o backend, confirme que o serviço MySQL está ativo e que o banco configurado existe. Não há um script `database/schema.sql` neste repositório.
 Antes de iniciar uma versão com a opção de repasse da taxa do ingresso, aplique manualmente a migração `java/database/migrations/20261111_add_taxa_repassada_comprador.sql` no banco configurado.
+Para ativar fila de espera, agenda, notificações e lembretes de eventos, aplique também `java/database/migrations/20261112_event_management_features.sql`. Os lembretes são notificações internas na web, geradas automaticamente até 24 horas antes; não há envio por e-mail/push nem processamento de pagamentos reais.
 
 ### 2. Backend (Java)
 Abra um terminal na pasta raiz do repositório e execute:

@@ -13,10 +13,12 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.backendpi.backend.dto.EventoResumoDTO;
 import com.backendpi.backend.model.Evento;
 import com.backendpi.backend.repository.EventoRepository;
+import com.backendpi.backend.repository.EventoListaEsperaRepository;
 import com.backendpi.backend.repository.ParticipacaoEventoRepository;
 
 @Service
@@ -25,13 +27,22 @@ public class EventoService {
     private final EventoRepository eventoRepository;
 
     private final ParticipacaoEventoRepository participacaoEventoRepository;
+    private final EventoListaEsperaRepository listaEsperaRepository;
+    private final NotificacaoEventoService notificacaoService;
+    private final ParticipacaoEventoService participacaoService;
 
     public EventoService(
             EventoRepository eventoRepository,
-            ParticipacaoEventoRepository participacaoEventoRepository) {
+            ParticipacaoEventoRepository participacaoEventoRepository,
+            EventoListaEsperaRepository listaEsperaRepository,
+            NotificacaoEventoService notificacaoService,
+            ParticipacaoEventoService participacaoService) {
 
         this.eventoRepository = eventoRepository;
         this.participacaoEventoRepository = participacaoEventoRepository;
+        this.listaEsperaRepository = listaEsperaRepository;
+        this.notificacaoService = notificacaoService;
+        this.participacaoService = participacaoService;
     }
 
     public List<Evento> listarTodos() {
@@ -112,12 +123,13 @@ public class EventoService {
         eventoRepository.delete(evento);
     }
 
+    @Transactional
     public Evento atualizar(
             Long idEvento,
             Long idUsuario,
             Evento novo) {
 
-        Evento evento = eventoRepository.findById(idEvento)
+        Evento evento = eventoRepository.findByIdForUpdate(idEvento)
                 .orElseThrow(() -> new RuntimeException("Evento não encontrado"));
 
         if (!evento.getCriadorId().equals(idUsuario)) {
@@ -140,6 +152,19 @@ public class EventoService {
             );
         }
 
+        boolean detalhesAlterados =
+                !java.util.Objects.equals(evento.getTitulo(), novo.getTitulo())
+                || !java.util.Objects.equals(evento.getDataEvento(), novo.getDataEvento())
+                || !java.util.Objects.equals(evento.getHorarioInicio(), novo.getHorarioInicio())
+                || !java.util.Objects.equals(evento.getHorarioFim(), novo.getHorarioFim())
+                || !java.util.Objects.equals(evento.getLocalEvento(), novo.getLocalEvento())
+                || !java.util.Objects.equals(evento.getDescricao(), novo.getDescricao())
+                || !java.util.Objects.equals(evento.getCategoria(), novo.getCategoria())
+                || !java.util.Objects.equals(evento.getEncerramentoInscricoes(), novo.getEncerramentoInscricoes())
+                || !java.util.Objects.equals(evento.getLimiteParticipantes(), novo.getLimiteParticipantes())
+                || !java.util.Objects.equals(evento.getPrecoIngresso(), novo.getPrecoIngresso())
+                || !java.util.Objects.equals(evento.getExigeCheckin(), novo.getExigeCheckin());
+
         evento.setTitulo(novo.getTitulo());
         evento.setDescricao(novo.getDescricao());
         evento.setCategoria(novo.getCategoria());
@@ -161,12 +186,22 @@ public class EventoService {
             evento.setPrecoIngresso(novo.getPrecoIngresso());
         }
 
-        return eventoRepository.save(evento);
+        Evento salvo = eventoRepository.save(evento);
+        if (detalhesAlterados) {
+            notificacaoService.notificarParticipantes(
+                    idEvento,
+                    "EVENTO_ATUALIZADO",
+                    "O organizador atualizou as informações deste evento."
+            );
+        }
+        participacaoService.promoverVagasDisponiveis(idEvento);
+        return salvo;
     }
 
+    @Transactional
     public Evento cancelar(Long idEvento, Long idUsuario) {
 
-        Evento evento = eventoRepository.findById(idEvento)
+        Evento evento = eventoRepository.findByIdForUpdate(idEvento)
                 .orElseThrow(() -> new RuntimeException("Evento não encontrado"));
 
         if (!evento.getCriadorId().equals(idUsuario)) {
@@ -175,19 +210,37 @@ public class EventoService {
             );
         }
 
+        if ("CANCELADO".equals(evento.getStatus())) {
+            return evento;
+        }
+
         evento.setStatus("CANCELADO");
 
-        return eventoRepository.save(evento);
+        Evento salvo = eventoRepository.save(evento);
+        notificacaoService.notificarParticipantes(
+                idEvento,
+                "EVENTO_CANCELADO",
+                "O evento foi cancelado pelo organizador."
+        );
+        listaEsperaRepository.findByEventoIdOrderByAdicionadoEmAscIdAsc(idEvento)
+                .forEach(entrada -> notificacaoService.notificarUsuario(
+                        entrada.getUsuarioId(),
+                        idEvento,
+                        "EVENTO_CANCELADO",
+                        "O evento em cuja lista de espera você estava foi cancelado."
+                ));
+        listaEsperaRepository.deleteByEventoId(idEvento);
+        return salvo;
     }
 
     public Page<EventoResumoDTO> buscarComFiltros(
             String texto,
-            String status,
             String categoria,
             Long comunidadeId,
             Boolean pago,
             LocalDate dataInicio,
             LocalDate dataFim,
+            String formato,
             Double lat,
         Double lng,
         Double raioKm,
@@ -198,12 +251,11 @@ public class EventoService {
             texto = null;
         }
 
-        if (status != null && status.trim().isEmpty()) {
-            status = null;
-        }
-
         if (categoria != null && categoria.trim().isEmpty()) {
             categoria = null;
+        }
+        if (formato != null && formato.trim().isEmpty()) {
+            formato = null;
         }
 
         Pageable pageable = PageRequest.of(pagina, tamanho);
@@ -211,12 +263,12 @@ public class EventoService {
         Page<Evento> paginaEventos
                 = eventoRepository.buscarComFiltros(
                         texto,
-                        status,
                         categoria,
                         comunidadeId,
                         pago,
                         dataInicio,
                         dataFim,
+                        formato,
                         lat,
                         lng,
                         raioKm,

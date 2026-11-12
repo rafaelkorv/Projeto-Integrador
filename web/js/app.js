@@ -1,4 +1,4 @@
-import { ApiService } from './api_service.js?v=checkout-platform-fee-1';
+import { ApiService } from './api_service.js?v=event-cycle-3';
 
 // Controlador central da interface: mantém o estado em memória, atualiza o DOM e delega o acesso ao servidor ao ApiService.
 class AppController {
@@ -39,6 +39,7 @@ class AppController {
         this.filtrosEventos = {
             texto: null,
             categoria: null,
+            formato: null,
             pago: null,
             dataInicio: null,
             dataFim: null
@@ -54,6 +55,7 @@ class AppController {
         this.filtroPessoas = 'todas';
         this.coordenadasUsuario = null;
         this.filtroProximidadeAtivo = false;
+        this.timerNotificacoes = null;
     }
     // Ponto de entrada da aplicação: registra eventos da interface e decide entre boas-vindas e sessão existente.
     async inicializar() {
@@ -160,6 +162,8 @@ class AppController {
             try {
                 await this.carregarDadosGlobais();
                 await this.carregarConversas();
+                await this.carregarNotificacoesEventos();
+                this.iniciarAtualizacaoNotificacoes();
                 await this.abrirPostPeloLink();
             } catch (erro) {
                 console.error(
@@ -285,7 +289,6 @@ class AppController {
 
         try {
             const resultado = await ApiService.buscarEventos({
-                status: 'AGENDADO',
                 page: 0,
                 size: 100
             });
@@ -499,6 +502,8 @@ class AppController {
         }
         if (nomeAba === 'comunidades') this.carregarComunidades();
         if (nomeAba === 'eventos') this.carregarEventos();
+        if (nomeAba === 'agenda') this.carregarAgendaEventos();
+        if (nomeAba === 'notificacoes') this.carregarNotificacoesEventos();
     }
 
     atualizarMenuLateral() {
@@ -653,6 +658,10 @@ class AppController {
         if (mensagem) {
             feedback.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
+    }
+
+    async mensagemErroApi(resposta, mensagemPadrao) {
+        return ApiService.mensagemErroResposta(resposta, mensagemPadrao);
     }
 
     definirEventoLoading(carregando) {
@@ -1271,7 +1280,19 @@ class AppController {
         this.atualizarMenuLateral();
         this.carregarDadosGlobais();
         this.carregarConversas();
+        this.carregarNotificacoesEventos();
         this.conectarWebSocketChat();
+        this.iniciarAtualizacaoNotificacoes();
+    }
+
+    iniciarAtualizacaoNotificacoes() {
+        if (!this.timerNotificacoes) {
+            this.timerNotificacoes = setInterval(() => {
+                if (ApiService.getIdUsuarioLogado()) {
+                    this.carregarNotificacoesEventos();
+                }
+            }, 60000);
+        }
     }
 
     fazerLogout() {
@@ -2958,7 +2979,7 @@ class AppController {
         const container = document.getElementById('feed-eventos-destaque');
         if (!container) return;
         try {
-            const resultado = await ApiService.buscarEventos({ status: 'AGENDADO', page: 0, size: 6 });
+            const resultado = await ApiService.buscarEventos({ page: 0, size: 6 });
             const eventos = this.ordenarPorInteresses(resultado.content || []).slice(0, 3);
             container.innerHTML = eventos.length ? eventos.map(evento => `<button class="feed-evento-item" onclick="app.abrirDetalhesEvento(${evento.id})"><span>${evento.dataEvento ? evento.dataEvento.split('-').reverse().join('/') : '--'}</span><strong>${this.escaparHtmlDestaque(evento.titulo)}</strong><small>${this.escaparHtmlDestaque(evento.localEvento || 'Local a confirmar')}</small></button>`).join('') : '<p class="feed-sidebar-empty">Nenhum evento agendado.</p>';
         } catch (erro) {
@@ -4052,16 +4073,6 @@ ${ApiService.getIdUsuarioLogado() ? `
 
             let eventos = resultado.content || [];
 
-            const categoria = document.getElementById('filtro-evento-categoria')?.value;
-            const formato = document.getElementById('filtro-evento-formato')?.value;
-
-            if (formato) {
-                eventos = eventos.filter(evento => {
-                    const online = /^(https?:\/\/|www\.)/i.test(evento.localEvento || '');
-                    return formato === 'online' ? online : !online;
-                });
-            }
-
             eventos = this.ordenarPorInteresses(eventos);
             this.listaEventos = eventos;
             this.totalPaginasEventos = resultado.totalPages;
@@ -4307,6 +4318,252 @@ ${ApiService.getIdUsuarioLogado() ? `
         } catch (erro) {
             console.error(erro);
             container.innerHTML = '<div class="evento-destaque-vazio">Não foi possível carregar seus eventos.</div>';
+        }
+    }
+
+    async carregarAgendaEventos() {
+        const container = document.getElementById('agenda-eventos-container');
+        if (!container) return;
+        const idUsuario = ApiService.getIdUsuarioLogado();
+        if (!idUsuario) {
+            container.innerHTML = '<div class="evento-destaque-vazio">Entre para salvar eventos na sua agenda.</div>';
+            return;
+        }
+
+        container.textContent = 'Carregando agenda...';
+        try {
+            const eventos = await ApiService.listarAgendaEventos(idUsuario);
+            const futuros = eventos
+                .filter(evento => {
+                    if (!evento.dataEvento || !evento.horarioFim) return false;
+                    return new Date(`${evento.dataEvento}T${evento.horarioFim}`) > new Date()
+                        && evento.status !== 'CANCELADO';
+                })
+                .sort((a, b) => new Date(`${a.dataEvento}T${a.horarioInicio || '00:00'}`)
+                    - new Date(`${b.dataEvento}T${b.horarioInicio || '00:00'}`));
+
+            if (!futuros.length) {
+                container.innerHTML = '<div class="evento-destaque-vazio">Sua agenda ainda não tem eventos futuros salvos.</div>';
+                return;
+            }
+
+            container.innerHTML = futuros.map(evento => `
+                <article class="agenda-evento-item">
+                    <div>
+                        <strong>${this.escaparHtmlDestaque(evento.titulo || 'Evento')}</strong>
+                        <span>${this.escaparHtmlDestaque(this.formatarDataEvento(evento.dataEvento))}
+                            · ${this.escaparHtmlDestaque(evento.horarioInicio?.substring(0, 5) || '--:--')}
+                            · ${this.escaparHtmlDestaque(evento.localEvento || 'Local a confirmar')}</span>
+                    </div>
+                    <div class="agenda-evento-acoes">
+                        <button class="btn-secondary" onclick="app.abrirDetalhesEvento(${Number(evento.id)})">Detalhes</button>
+                        <button class="btn-ghost" onclick="app.removerEventoDaAgenda(${Number(evento.id)})">Remover</button>
+                    </div>
+                </article>
+            `).join('');
+        } catch (erro) {
+            console.error('Erro ao carregar agenda de eventos:', erro);
+            container.innerHTML = '<div class="evento-destaque-vazio">Não foi possível carregar sua agenda.</div>';
+        }
+    }
+
+    async alternarEventoNaAgenda(idEvento, salvo) {
+        const idUsuario = ApiService.getIdUsuarioLogado();
+        if (!idUsuario) return alert('Entre para salvar eventos na sua agenda.');
+
+        try {
+            const resposta = salvo
+                ? await ApiService.removerEventoAgenda(idEvento, idUsuario)
+                : await ApiService.salvarEventoAgenda(idEvento, idUsuario);
+            if (!resposta.ok) {
+                throw new Error(await this.mensagemErroApi(
+                    resposta,
+                    'Não foi possível alterar sua agenda.'
+                ));
+            }
+            await this.abrirDetalhesEvento(idEvento);
+            await this.carregarAgendaEventos();
+            this.mostrarFeedbackGlobal(salvo
+                ? 'Evento removido da agenda.'
+                : 'Evento salvo na sua agenda.');
+        } catch (erro) {
+            console.error('Erro ao atualizar agenda de eventos:', erro);
+            this.mostrarFeedbackGlobal(erro.message || 'Não foi possível atualizar sua agenda.');
+        }
+    }
+
+    async removerEventoDaAgenda(idEvento) {
+        const idUsuario = ApiService.getIdUsuarioLogado();
+        if (!idUsuario) return;
+        try {
+            const resposta = await ApiService.removerEventoAgenda(idEvento, idUsuario);
+            if (!resposta.ok) {
+                throw new Error(await this.mensagemErroApi(
+                    resposta,
+                    'Não foi possível remover o evento da agenda.'
+                ));
+            }
+            await this.carregarAgendaEventos();
+        } catch (erro) {
+            console.error('Erro ao remover evento da agenda:', erro);
+            this.mostrarFeedbackGlobal(erro.message || 'Não foi possível remover o evento da agenda.');
+        }
+    }
+
+    async exportarAgendaIcs() {
+        const idUsuario = ApiService.getIdUsuarioLogado();
+        if (!idUsuario) return alert('Entre para exportar sua agenda.');
+        try {
+            const eventos = await ApiService.listarAgendaEventos(idUsuario);
+            const icsEscape = valor => String(valor || '')
+                .replace(/\\/g, '\\\\')
+                .replace(/\n/g, '\\n')
+                .replace(/,/g, '\\,')
+                .replace(/;/g, '\\;');
+            const linhas = [
+                'BEGIN:VCALENDAR',
+                'VERSION:2.0',
+                'PRODID:-//SocialJoin//Agenda de eventos//PT-BR'
+            ];
+            eventos.filter(evento => evento.status !== 'CANCELADO'
+                && evento.dataEvento && evento.horarioInicio)
+                .forEach(evento => {
+                    const dia = evento.dataEvento.replace(/-/g, '');
+                    const inicio = (evento.horarioInicio || '00:00:00')
+                        .replace(/:/g, '').slice(0, 6).padEnd(6, '0');
+                    const fim = (evento.horarioFim || evento.horarioInicio || '00:00:00')
+                        .replace(/:/g, '').slice(0, 6).padEnd(6, '0');
+                    linhas.push(
+                        'BEGIN:VEVENT',
+                        `UID:socialjoin-event-${Number(evento.id)}@socialjoin`,
+                        `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')}`,
+                        `DTSTART;TZID=America/Sao_Paulo:${dia}T${inicio}`,
+                        `DTEND;TZID=America/Sao_Paulo:${dia}T${fim}`,
+                        `SUMMARY:${icsEscape(evento.titulo)}`,
+                        `DESCRIPTION:${icsEscape(evento.descricao)}`,
+                        `LOCATION:${icsEscape(evento.localEvento)}`,
+                        'END:VEVENT'
+                    );
+                });
+            linhas.push('END:VCALENDAR');
+            const arquivo = new Blob([linhas.join('\r\n')], { type: 'text/calendar;charset=utf-8' });
+            const url = URL.createObjectURL(arquivo);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'minha-agenda-socialjoin.ics';
+            link.click();
+            URL.revokeObjectURL(url);
+        } catch (erro) {
+            console.error('Erro ao exportar agenda:', erro);
+            this.mostrarFeedbackGlobal('Não foi possível exportar sua agenda.');
+        }
+    }
+
+    async carregarNotificacoesEventos() {
+        const container = document.getElementById('notificacoes-container');
+        const contador = document.getElementById('notificacoes-nao-lidas');
+        if (!container) return;
+        const idUsuario = ApiService.getIdUsuarioLogado();
+        if (!idUsuario) {
+            container.innerHTML = '<div class="evento-destaque-vazio">Entre para receber atualizações e lembretes dos eventos.</div>';
+            if (contador) contador.hidden = true;
+            return;
+        }
+
+        try {
+            const notificacoes = await ApiService.listarNotificacoesEventos(idUsuario);
+            const naoLidas = notificacoes.filter(notificacao => !notificacao.lida).length;
+            if (contador) {
+                contador.textContent = naoLidas > 99 ? '99+' : String(naoLidas);
+                contador.hidden = naoLidas === 0;
+            }
+            if (!notificacoes.length) {
+                container.innerHTML = '<div class="evento-destaque-vazio">Você não tem notificações por enquanto.</div>';
+                return;
+            }
+            container.innerHTML = notificacoes.map(notificacao => `
+                <article class="notificacao-item ${notificacao.lida ? '' : 'nao-lida'}">
+                    <div>
+                        <strong>${this.escaparHtmlDestaque(notificacao.tipo.replaceAll('_', ' '))}</strong>
+                        <p>${this.escaparHtmlDestaque(notificacao.mensagem)}</p>
+                        <small>${this.escaparHtmlDestaque(new Date(notificacao.criadoEm).toLocaleString('pt-BR'))}</small>
+                    </div>
+                    ${notificacao.eventoId
+                        ? `<button class="btn-ghost" onclick="app.abrirNotificacaoEvento(${Number(notificacao.id)}, ${Number(notificacao.eventoId)})">Ver evento</button>`
+                        : ''}
+                </article>
+            `).join('');
+        } catch (erro) {
+            console.error('Erro ao carregar notificações:', erro);
+            container.innerHTML = '<div class="evento-destaque-vazio">Não foi possível carregar suas notificações.</div>';
+        }
+    }
+
+    async abrirNotificacaoEvento(idNotificacao, idEvento) {
+        const idUsuario = ApiService.getIdUsuarioLogado();
+        if (idUsuario) {
+            const resposta = await ApiService.marcarNotificacaoLida(idNotificacao, idUsuario);
+            if (!resposta.ok) {
+                this.mostrarFeedbackGlobal('Não foi possível atualizar a notificação.');
+                return;
+            }
+        }
+        await this.carregarNotificacoesEventos();
+        await this.abrirDetalhesEvento(idEvento);
+    }
+
+    async entrarNaListaEsperaEvento(idEvento, sair = false) {
+        const idUsuario = ApiService.getIdUsuarioLogado();
+        if (!idUsuario) return alert('Entre para entrar na lista de espera.');
+        try {
+            const resposta = sair
+                ? await ApiService.sairDaListaEspera(idEvento, idUsuario)
+                : await ApiService.entrarNaListaEspera(idEvento, idUsuario);
+            if (!resposta.ok) {
+                const mensagem = await resposta.text();
+                throw new Error(mensagem || 'Não foi possível alterar a lista de espera.');
+            }
+            await this.abrirDetalhesEvento(idEvento);
+            this.mostrarFeedbackGlobal(sair
+                ? 'Você saiu da lista de espera.'
+                : 'Você entrou na lista de espera. Se uma vaga abrir, sua inscrição será confirmada automaticamente.');
+        } catch (erro) {
+            console.error('Erro na lista de espera:', erro);
+            this.mostrarFeedbackGlobal(erro.message || 'Não foi possível atualizar a lista de espera.');
+        }
+    }
+
+    async carregarResumoOrganizador(idEvento) {
+        const campo = document.getElementById('evento-organizador-indicadores');
+        if (!campo) return;
+        const idUsuario = ApiService.getIdUsuarioLogado();
+        if (!idUsuario) return;
+        campo.textContent = 'Carregando inscrições...';
+        try {
+            const resumo = await ApiService.obterResumoOrganizador(idEvento, idUsuario);
+            const limite = resumo.limiteVagas == null ? 'sem limite' : resumo.limiteVagas;
+            campo.textContent = `${resumo.inscritos}/${limite} inscritos · ${resumo.presentes} presentes · ${resumo.listaEspera} na lista de espera`;
+        } catch (erro) {
+            console.error('Erro ao carregar resumo do evento:', erro);
+            campo.textContent = 'Não foi possível carregar os indicadores.';
+        }
+    }
+
+    async exportarParticipantesEvento() {
+        if (!this.eventoEditando) return;
+        const idEvento = this.eventoEditando.idEvento || this.eventoEditando.id;
+        const idUsuario = ApiService.getIdUsuarioLogado();
+        try {
+            const arquivo = await ApiService.exportarParticipantesEvento(idEvento, idUsuario);
+            const url = URL.createObjectURL(arquivo);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `participantes-evento-${idEvento}.csv`;
+            link.click();
+            URL.revokeObjectURL(url);
+        } catch (erro) {
+            console.error('Erro ao exportar participantes:', erro);
+            this.mostrarFeedbackGlobal('Não foi possível exportar os participantes.');
         }
     }
 
@@ -4743,13 +5000,23 @@ ${ApiService.getIdUsuarioLogado() ? `
         }
     }
 
-    gerenciarEvento(idEvento) {
+    async gerenciarEvento(idEvento) {
 
-        const evento = this.listaEventos.find(
+        let evento = this.listaEventos.find(
             e => (e.idEvento || e.id) == idEvento
         );
 
-        if (!evento) return;
+        if (!evento) {
+            try {
+                evento = await ApiService.buscarEventoPorId(idEvento);
+            } catch (erro) {
+                console.error('Erro ao carregar evento para edição:', erro);
+                this.mostrarFeedbackGlobal(
+                    erro.message || 'Não foi possível carregar o evento para edição.'
+                );
+                return;
+            }
+        }
 
         this.eventoEditando = evento;
 
@@ -4816,6 +5083,7 @@ ${ApiService.getIdUsuarioLogado() ? `
         }
 
         this.abrirModal('gerenciar-evento-modal');
+        this.carregarResumoOrganizador(idEvento);
     }
 
     async salvarEdicaoEvento() {
@@ -4967,22 +5235,29 @@ ${ApiService.getIdUsuarioLogado() ? `
             exigeCheckin
         };
 
-        const resposta = await ApiService.atualizarEvento(
-            idEvento,
-            idUsuario,
-            eventoAtualizado
-        );
+        try {
+            const resposta = await ApiService.atualizarEvento(
+                idEvento,
+                idUsuario,
+                eventoAtualizado
+            );
 
-        if (resposta.ok) {
+            if (!resposta.ok) {
+                const mensagem = await this.mensagemErroApi(
+                    resposta,
+                    'Não foi possível atualizar o evento. Verifique os dados e tente novamente.'
+                );
+                this.mostrarFeedbackGlobal(mensagem);
+                return;
+            }
+
             this.fecharModal('gerenciar-evento-modal');
-
             this.eventoEditando = null;
-
             await this.carregarEventos();
-
-            alert("Evento atualizado com sucesso!");
-        } else {
-            alert("Não foi possível atualizar o evento.");
+            this.mostrarFeedbackGlobal('Evento atualizado com sucesso!');
+        } catch (erro) {
+            console.error('Erro ao atualizar evento:', erro);
+            this.mostrarFeedbackGlobal(erro.message || 'Não foi possível atualizar o evento.');
         }
     }
 
@@ -5052,19 +5327,24 @@ ${ApiService.getIdUsuarioLogado() ? `
             return alert("Faça login para participar do evento.");
         }
 
-        const resposta = await ApiService.participarEvento(
-            idEvento,
-            idUsuario
-        );
-
-        if (resposta.ok) {
-
+        try {
+            const resposta = await ApiService.participarEvento(
+                idEvento,
+                idUsuario
+            );
+            if (!resposta.ok) {
+                const mensagem = await this.mensagemErroApi(
+                    resposta,
+                    'Não foi possível participar do evento.'
+                );
+                this.mostrarFeedbackGlobal(mensagem);
+                return;
+            }
             await this.carregarEventos();
-
             await this.abrirDetalhesEvento(idEvento);
-
-        } else {
-            alert("Não foi possível participar do evento.");
+        } catch (erro) {
+            console.error('Erro ao participar do evento:', erro);
+            this.mostrarFeedbackGlobal(erro.message || 'Não foi possível participar do evento.');
         }
     }
 
@@ -5087,7 +5367,11 @@ ${ApiService.getIdUsuarioLogado() ? `
             const resposta = await ApiService.sairEvento(idEvento, idUsuario);
 
             if (!resposta.ok) {
-                this.mostrarFeedbackGlobal("Não foi possível cancelar sua participação.");
+                const mensagem = await this.mensagemErroApi(
+                    resposta,
+                    'Não foi possível cancelar sua participação.'
+                );
+                this.mostrarFeedbackGlobal(mensagem);
                 return;
             }
 
@@ -5095,7 +5379,7 @@ ${ApiService.getIdUsuarioLogado() ? `
             await this.abrirDetalhesEvento(idEvento);
         } catch (erro) {
             console.error("Erro ao sair do evento:", erro);
-            this.mostrarFeedbackGlobal("Não foi possível cancelar sua participação.");
+            this.mostrarFeedbackGlobal(erro.message || 'Não foi possível cancelar sua participação.');
         }
     }
 
@@ -5265,6 +5549,10 @@ ${ApiService.getIdUsuarioLogado() ? `
             document.getElementById('filtro-evento-categoria')
                 .value;
 
+        const formato =
+            document.getElementById('filtro-evento-formato')
+                .value;
+
         const periodo =
             document.getElementById('filtro-evento-periodo')
                 .value;
@@ -5363,6 +5651,8 @@ ${ApiService.getIdUsuarioLogado() ? `
             categoria:
                 categoria || null,
 
+            formato: formato || null,
+
             dataInicio,
             dataFim,
             lat: latFiltro,
@@ -5408,8 +5698,23 @@ ${ApiService.getIdUsuarioLogado() ? `
             }
         }
 
-        const participantes =
-            await ApiService.listarParticipantesEvento(idEvento);
+        let participantes;
+        let eventoSalvo = false;
+        let usuarioNaListaEspera = false;
+        try {
+            participantes = await ApiService.listarParticipantesEvento(idEvento);
+            const idUsuario = ApiService.getIdUsuarioLogado();
+            if (idUsuario) {
+                [eventoSalvo, usuarioNaListaEspera] = await Promise.all([
+                    ApiService.estaEventoSalvo(idEvento, idUsuario),
+                    ApiService.estaNaListaEspera(idEvento, idUsuario)
+                ]);
+            }
+        } catch (erro) {
+            console.error('Erro ao carregar inscrições do evento:', erro);
+            this.mostrarFeedbackGlobal(erro.message || 'Não foi possível carregar as informações do evento.');
+            return;
+        }
 
         const quantidadeParticipantes = participantes.length;
 
@@ -5421,7 +5726,6 @@ ${ApiService.getIdUsuarioLogado() ? `
             participantes.some(
                 p => p.usuarioId == idUsuarioLogado
             );
-
         const ehCriador =
             idUsuarioLogado &&
             idUsuarioLogado == evento.criadorId;
@@ -5810,6 +6114,8 @@ ${ApiService.getIdUsuarioLogado() ? `
                     ? 'Este evento já foi encerrado'
                     : usuarioParticipa
                         ? 'Você está participando deste evento'
+                        : usuarioNaListaEspera
+                            ? 'Você está na lista de espera'
                         : 'Garanta sua participação'
             }
                     </strong>
@@ -5818,10 +6124,9 @@ ${ApiService.getIdUsuarioLogado() ? `
 
                 <div class="evento-detalhes-actions">
 
-                    ${!eventoCancelado &&
-                !eventoEncerrado &&
-                idUsuarioLogado &&
-                !ehCriador
+                    ${idUsuarioLogado &&
+                !ehCriador &&
+                (usuarioParticipa || usuarioNaListaEspera || (!eventoCancelado && !eventoEncerrado))
                 ? usuarioParticipa
                     ? `
                                 <button
@@ -5836,8 +6141,16 @@ ${ApiService.getIdUsuarioLogado() ? `
                                     Sair do evento
                                 </button>
                             `
-                    : inscricoesEncerradas
+                    : usuarioNaListaEspera
                         ? `
+                                <button type="button" class="evento-action-secondary"
+                                    onclick="app.entrarNaListaEsperaEvento(${idEvento}, true)">
+                                    <i class="material-icons">remove_circle_outline</i>
+                                    Sair da lista de espera
+                                </button>
+                            `
+                        : inscricoesEncerradas
+                            ? `
                                     <button
                                         type="button"
                                         class="evento-action-disabled"
@@ -5848,14 +6161,12 @@ ${ApiService.getIdUsuarioLogado() ? `
                                 `
                         : eventoLotado
                             ? `
-                                        <button
-                                            type="button"
-                                            class="evento-action-disabled"
-                                            disabled
-                                        >
-                                            Evento lotado
-                                        </button>
-                                    `
+                                    <button type="button" class="evento-action-primary"
+                                        onclick="app.entrarNaListaEsperaEvento(${idEvento})">
+                                        <i class="material-icons">hourglass_top</i>
+                                        Entrar na lista de espera
+                                    </button>
+                                `
                             : `
                                        <button
     type="button"
@@ -5867,6 +6178,17 @@ ${ApiService.getIdUsuarioLogado() ? `
                                 : 'Participar gratuitamente'}
 </button>
                                     `
+                : ''
+            }
+
+                    ${idUsuarioLogado
+                ? `
+                    <button type="button" class="evento-action-secondary"
+                        onclick="app.alternarEventoNaAgenda(${idEvento}, ${eventoSalvo})">
+                        <i class="material-icons">${eventoSalvo ? 'bookmark_remove' : 'bookmark_add'}</i>
+                        ${eventoSalvo ? 'Remover da agenda' : 'Salvar na agenda'}
+                    </button>
+                `
                 : ''
             }
 

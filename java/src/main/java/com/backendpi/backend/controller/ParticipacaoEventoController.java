@@ -3,6 +3,9 @@ package com.backendpi.backend.controller;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ContentDisposition;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -55,6 +58,29 @@ public class ParticipacaoEventoController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/{idEvento}/lista-espera/usuario/{idUsuario}")
+    public boolean estaNaListaEspera(
+            @PathVariable Long idEvento,
+            @PathVariable Long idUsuario) {
+        return service.estaNaListaEspera(idEvento, idUsuario);
+    }
+
+    @PostMapping("/{idEvento}/lista-espera/{idUsuario}")
+    public ResponseEntity<Void> entrarNaListaEspera(
+            @PathVariable Long idEvento,
+            @PathVariable Long idUsuario) {
+        service.entrarNaListaEspera(idEvento, idUsuario);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/{idEvento}/lista-espera/{idUsuario}")
+    public ResponseEntity<Void> sairDaListaEspera(
+            @PathVariable Long idEvento,
+            @PathVariable Long idUsuario) {
+        service.sairDaListaEspera(idEvento, idUsuario);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/{idEvento}/participantes")
     public List<ParticipacaoEvento> listarParticipantes(
             @PathVariable Long idEvento) {
@@ -67,6 +93,34 @@ public class ParticipacaoEventoController {
             @PathVariable Long idEvento) {
 
         return service.contarParticipantes(idEvento);
+    }
+
+    @GetMapping("/{idEvento}/organizador/{idSolicitante}/resumo")
+    public ParticipacaoEventoService.ResumoOrganizador resumoOrganizador(
+            @PathVariable Long idEvento,
+            @PathVariable Long idSolicitante) {
+        return service.obterResumoOrganizador(idEvento, idSolicitante);
+    }
+
+    @GetMapping("/{idEvento}/organizador/{idSolicitante}/participantes.csv")
+    public ResponseEntity<byte[]> exportarParticipantes(
+            @PathVariable Long idEvento,
+            @PathVariable Long idSolicitante) {
+        StringBuilder csv = new StringBuilder("usuario_id,status,data_checkin\n");
+        service.exportarParticipantes(idEvento, idSolicitante).forEach(participacao ->
+                csv.append(participacao.getUsuarioId()).append(',')
+                        .append(participacao.getStatus()).append(',')
+                        .append(participacao.getDataCheckin() == null
+                                ? "" : participacao.getDataCheckin())
+                        .append('\n')
+        );
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.attachment()
+                                .filename("participantes-evento-" + idEvento + ".csv")
+                                .build().toString())
+                .contentType(new MediaType("text", "csv"))
+                .body(csv.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
     }
 
     @DeleteMapping("/{idEvento}/participantes/{idParticipante}/usuario/{idSolicitante}")
