@@ -243,12 +243,12 @@
                             eventos</button>
                     </div>
                     <div class="eventos-filtros">
-                        <input type="text" id="filtro-evento-texto" placeholder="Buscar por nome ou descrição..."
+                        <input type="text" id="filtro-evento-texto" placeholder="Buscar"
                             oninput="app.buscarEventosComDebounce()">
 
                         <select id="filtro-evento-periodo" onchange="app.filtrarEventos()">
 
-                            <option value="">Qualquer data</option>
+                            <option value="">Selecione um período</option>
                             <option value="hoje">Hoje</option>
                             <option value="semana">Esta semana</option>
                             <option value="mes">Este mês</option>
@@ -256,13 +256,13 @@
                         </select>
 
                         <select id="filtro-evento-preco" onchange="app.filtrarEventos()">
-                            <option value="">Todos os preços</option>
+                            <option value="">Selecione uma faixa de preço</option>
                             <option value="gratuito">Gratuitos</option>
                             <option value="pago">Pagos</option>
                         </select>
 
                         <select id="filtro-evento-categoria" onchange="app.filtrarEventos()">
-                            <option value="">Todas as categorias</option>
+                            <option value="">Selecione uma categoria</option>
                             <option value="Tecnologia">Tecnologia</option>
                             <option value="Arte">Arte</option>
                             <option value="Música">Música</option>
@@ -272,7 +272,7 @@
                             <option value="Cultura">Cultura</option>
                         </select>
                                                 <select id="filtro-evento-formato" onchange="app.filtrarEventos()">
-                            <option value="">Todos os formatos</option>
+                            <option value="">Selecione um formato</option>
                             <option value="presencial">Presenciais</option>
                             <option value="online">Online</option>
                         </select>
@@ -455,7 +455,18 @@
                     </div>
 
                     <div id="users-container" class="pessoas-grid">Carregando...</div>
-
+                    <nav id="pessoas-paginacao" class="pessoas-paginacao" aria-label="Paginação de pessoas"
+                        hidden>
+                        <button class="btn-secondary" id="btn-pessoas-anterior" type="button"
+                            onclick="app.paginaAnteriorPessoas()" disabled>
+                            Anterior
+                        </button>
+                        <span id="pessoas-pagina-info" aria-live="polite">Página 1 de 1</span>
+                        <button class="btn-secondary" id="btn-pessoas-proxima" type="button"
+                            onclick="app.proximaPaginaPessoas()" disabled>
+                            Próxima
+                        </button>
+                    </nav>
 
                 </div>
 
@@ -783,7 +794,7 @@
             <input type="text" id="comunidade-nome" placeholder="Ex: Desenvolvedores Java">
             <textarea id="comunidade-desc" placeholder="Qual o foco do grupo?"></textarea>
             <select id="comunidade-categoria">
-                <option value="">Categoria</option>
+                <option value="">Selecione uma categoria</option>
                 <option>Tecnologia</option>
                 <option>Arte</option>
                 <option>Música</option>
@@ -862,9 +873,10 @@
                             <div class="form-input-wrap">
                                 <i class="material-icons">groups</i>
                                 <select id="evento-comunidade-id">
-                                    <option value="">Nenhuma (Evento aberto / Global)</option>
+                                    <option value="">Selecione uma comunidade (opcional)</option>
                                 </select>
                             </div>
+                            <small class="form-hint">Sem comunidade vinculada, o evento ficará aberto ao público.</small>
                         </div>
                     </div>
 
@@ -955,7 +967,7 @@
                     <div id="wrap-evento-coordenadas" class="evento-coordenadas-box">
                         <div class="evento-coordenadas-topo">
                             <div class="evento-coordenadas-texto">
-                                <strong><i class="material-icons">map</i> Geolocalização para o Aplicativo Mobile</strong>
+                                <strong><i class="material-icons">map</i> Geolocalização</strong>
                                 <span>Permite que participantes encontrem este evento no mapa de eventos próximos.</span>
                             </div>
                             <button type="button" class="btn-gps" onclick="app.capturarCoordenadasEvento()" title="Usar minha localização atual via GPS">
@@ -1123,7 +1135,14 @@
                         </label>
 
                         <select id="editar-comunidade-categoria">
-                            <!-- mantenha suas options atuais -->
+                            <option value="">Selecione uma categoria</option>
+                            <option>Tecnologia</option>
+                            <option>Arte</option>
+                            <option>Música</option>
+                            <option>Esportes</option>
+                            <option>Educação</option>
+                            <option>Networking</option>
+                            <option>Cultura</option>
                         </select>
                     </div>
 
@@ -1477,9 +1496,10 @@
                             <div class="form-input-wrap">
                                 <i class="material-icons">groups</i>
                                 <select id="editar-evento-comunidade">
-                                    <option value="">Nenhuma (Evento aberto / Global)</option>
+                                    <option value="">Selecione uma comunidade (opcional)</option>
                                 </select>
                             </div>
+                            <small class="form-hint">Sem comunidade vinculada, o evento ficará aberto ao público.</small>
                         </div>
                     </div>
 

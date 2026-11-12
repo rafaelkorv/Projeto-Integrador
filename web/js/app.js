@@ -53,6 +53,9 @@ class AppController {
         this.chatSocket = null;
         this.chatSidebarAberto = true;
         this.filtroPessoas = 'todas';
+        this.paginaPessoas = 0;
+        this.tamanhoPaginaPessoas = 12;
+        this.pessoasFiltradas = [];
         this.coordenadasUsuario = null;
         this.filtroProximidadeAtivo = false;
         this.timerNotificacoes = null;
@@ -500,7 +503,7 @@ class AppController {
 
         this.comunidadeAtivaId = null; // Reseta se sair da tela de subreddit
 
-        if (nomeAba === 'busca') this.renderizarUsuarios(this.listaUsuariosCompleta);
+        if (nomeAba === 'busca') this.filtrarUsuarios();
         if (nomeAba === 'feed') {
             this.renderizarFeedGeral();
             this.carregarEventosFeed();
@@ -624,7 +627,7 @@ class AppController {
         const select = document.getElementById('evento-comunidade-id');
         if (!select) return;
 
-        select.innerHTML = '<option value="">Nenhuma (Evento aberto / Global)</option>';
+        select.innerHTML = '<option value="">Selecione uma comunidade (opcional)</option>';
         if (Array.isArray(this.listaComunidades)) {
             this.listaComunidades.forEach(com => {
                 const id = com.idComunidade || com.id;
@@ -3730,7 +3733,82 @@ ${ApiService.getIdUsuarioLogado() ? `
         }
 
 
+        const usuarioLogado = ApiService.getUsuarioLogado();
+        const interessesUsuario = Array.isArray(usuarioLogado?.interesses)
+            ? usuarioLogado.interesses
+            : this.interessesSelecionados;
+
+        pessoas = pessoas
+            .map(usuario => ({
+                usuario,
+                relevancia: this.calcularRelevanciaPessoa(
+                    usuario,
+                    interessesUsuario,
+                    termo
+                )
+            }))
+            .sort((a, b) =>
+                b.relevancia - a.relevancia ||
+                String(a.usuario.nome || '').localeCompare(
+                    String(b.usuario.nome || ''),
+                    'pt-BR',
+                    { sensitivity: 'base' }
+                )
+            )
+            .map(item => item.usuario);
+
+        this.paginaPessoas = 0;
+        this.pessoasFiltradas = pessoas;
         this.renderizarUsuarios(pessoas);
+    }
+
+    calcularRelevanciaPessoa(usuario, interessesUsuario, termoBusca) {
+        const id = usuario.idUsuario || usuario.id;
+        const comunidades = this.obterComunidadesDoUsuario(id);
+        const comunidadesEmComum = this.obterComunidadesEmComum(id);
+        const nome = String(usuario.nome || '').toLowerCase();
+        const username = String(usuario.username || '').toLowerCase();
+        const interessesDaPessoa = new Set(
+            (Array.isArray(usuario.interesses) ? usuario.interesses : [])
+                .map(interesse => String(interesse).trim().toLowerCase())
+                .filter(Boolean)
+        );
+        const textoPerfil = [
+            usuario.nome,
+            usuario.username,
+            usuario.bio,
+            ...comunidades.flatMap(comunidade => [
+                comunidade.nome,
+                comunidade.categoria
+            ])
+        ]
+            .filter(Boolean)
+            .join(' ')
+            .toLowerCase();
+
+        let relevancia = comunidadesEmComum.length * 10;
+        if (termoBusca) {
+            if (nome === termoBusca || username === termoBusca) {
+                relevancia += 2000;
+            } else if (nome.startsWith(termoBusca) || username.startsWith(termoBusca)) {
+                relevancia += 1000;
+            } else {
+                relevancia += 100;
+            }
+        }
+
+        interessesUsuario.forEach(interesse => {
+            const termo = String(interesse || '').trim().toLowerCase();
+            if (!termo) return;
+
+            if (interessesDaPessoa.has(termo)) {
+                relevancia += 8;
+            } else if (textoPerfil.includes(termo)) {
+                relevancia += 2;
+            }
+        });
+
+        return relevancia;
     }
 
     renderizarUsuarios(lista) {
@@ -3744,6 +3822,29 @@ ${ApiService.getIdUsuarioLogado() ? `
 
         container.innerHTML = '';
 
+        const totalPaginas = Math.ceil(
+            lista.length / this.tamanhoPaginaPessoas
+        );
+        this.paginaPessoas = Math.min(
+            this.paginaPessoas,
+            Math.max(totalPaginas - 1, 0)
+        );
+
+        const paginacao = document.getElementById('pessoas-paginacao');
+        const informacaoPagina = document.getElementById('pessoas-pagina-info');
+        const botaoAnterior = document.getElementById('btn-pessoas-anterior');
+        const botaoProxima = document.getElementById('btn-pessoas-proxima');
+
+        if (paginacao) paginacao.hidden = totalPaginas <= 1;
+        if (informacaoPagina) {
+            informacaoPagina.innerText =
+                `Página ${totalPaginas ? this.paginaPessoas + 1 : 0} de ${totalPaginas}`;
+        }
+        if (botaoAnterior) botaoAnterior.disabled = this.paginaPessoas <= 0;
+        if (botaoProxima) {
+            botaoProxima.disabled =
+                this.paginaPessoas >= totalPaginas - 1;
+        }
 
         if (!lista.length) {
 
@@ -3771,8 +3872,13 @@ ${ApiService.getIdUsuarioLogado() ? `
             return;
         }
 
+        const inicio = this.paginaPessoas * this.tamanhoPaginaPessoas;
+        const pessoasDaPagina = lista.slice(
+            inicio,
+            inicio + this.tamanhoPaginaPessoas
+        );
 
-        lista.forEach(usuario => {
+        pessoasDaPagina.forEach(usuario => {
 
             const id =
                 usuario.idUsuario ||
@@ -4063,6 +4169,23 @@ ${ApiService.getIdUsuarioLogado() ? `
 
             container.appendChild(div);
         });
+    }
+
+    paginaAnteriorPessoas() {
+        if (this.paginaPessoas <= 0) return;
+
+        this.paginaPessoas--;
+        this.renderizarUsuarios(this.pessoasFiltradas);
+    }
+
+    proximaPaginaPessoas() {
+        const totalPaginas = Math.ceil(
+            this.pessoasFiltradas.length / this.tamanhoPaginaPessoas
+        );
+        if (this.paginaPessoas >= totalPaginas - 1) return;
+
+        this.paginaPessoas++;
+        this.renderizarUsuarios(this.pessoasFiltradas);
     }
 
     // Busca somente a página atual com os filtros ativos; a API mantém a ordenação global entre páginas.
@@ -6065,7 +6188,7 @@ ${ApiService.getIdUsuarioLogado() ? `
                 </div>
 
 
-                <div class="evento-info-card">
+                <div class="evento-info-card evento-info-local">
                     <div class="evento-info-icon">
                         <i class="material-icons">
                             place
@@ -6081,16 +6204,16 @@ ${ApiService.getIdUsuarioLogado() ? `
             )}
                         </strong>
                         ${urlTransmissao
-                    ? `<a href="${urlTransmissao}" target="_blank" rel="noopener noreferrer" class="evento-rota-btn">
+                    ? `<a href="${urlTransmissao}" target="_blank" rel="noopener noreferrer" class="evento-rota-btn" aria-label="Acessar transmissão do evento">
                     <i class="material-icons">launch</i> Acessar transmissão
                 </a>`
                 : (evento.latitude != null && evento.longitude != null
-                    ? `<a href="https://www.google.com/maps/search/?api=1&query=${evento.latitude},${evento.longitude}" target="_blank" rel="noopener noreferrer" class="evento-rota-btn">
-                        <i class="material-icons">directions</i> Ver rota no Google Maps
+                    ? `<a href="https://www.google.com/maps/search/?api=1&query=${evento.latitude},${evento.longitude}" target="_blank" rel="noopener noreferrer" class="evento-rota-btn" aria-label="Abrir rota no Google Maps" title="Abrir rota no Google Maps">
+                        <i class="material-icons">directions</i> Abrir mapa
                     </a>`
                     : (evento.localEvento
-                        ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(evento.localEvento)}" target="_blank" rel="noopener noreferrer" class="evento-rota-btn">
-                            <i class="material-icons">directions</i> Ver no Google Maps
+                        ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(evento.localEvento)}" target="_blank" rel="noopener noreferrer" class="evento-rota-btn" aria-label="Abrir local no Google Maps" title="Abrir local no Google Maps">
+                            <i class="material-icons">directions</i> Abrir mapa
                         </a>`
                         : ''))}
                     </div>
@@ -6368,6 +6491,8 @@ ${ApiService.getIdUsuarioLogado() ? `
 
             let usuario = null;
             let postsUsuario = [];
+            let totalPostsUsuario = null;
+            let eventosUsuario = null;
 
 
             // =========================
@@ -6414,25 +6539,28 @@ ${ApiService.getIdUsuarioLogado() ? `
             // POSTS
             // =========================
 
-            try {
+            const [postsResultado, eventosResultado] = await Promise.allSettled([
+                ApiService.listarPostsPorUsuario(idUsuario),
+                ApiService.listarEventosPorUsuario(idUsuario)
+            ]);
 
-                postsUsuario =
-                    await ApiService.listarPostsPorUsuario(
-                        idUsuario
-                    );
-
-            } catch (erro) {
-
+            if (
+                postsResultado.status === 'fulfilled' &&
+                Array.isArray(postsResultado.value)
+            ) {
+                postsUsuario = postsResultado.value;
+                totalPostsUsuario = postsUsuario.length;
+            } else {
                 console.warn(
                     'Falha ao buscar posts do perfil:',
-                    erro
+                    postsResultado.status === 'rejected'
+                        ? postsResultado.reason
+                        : new Error('A resposta de posts não é uma lista.')
                 );
 
-                // Fallback usando os posts já carregados
                 postsUsuario =
                     (this.posts || [])
                         .filter(post => {
-
                             const idAutor =
                                 post.idUsuario ||
                                 post.id_usuario;
@@ -6442,188 +6570,192 @@ ${ApiService.getIdUsuarioLogado() ? `
                         });
             }
 
+            if (
+                eventosResultado.status === 'fulfilled' &&
+                Array.isArray(eventosResultado.value)
+            ) {
+                eventosUsuario = eventosResultado.value;
+            } else {
+                console.warn(
+                    'Falha ao buscar eventos do perfil:',
+                    eventosResultado.status === 'rejected'
+                        ? eventosResultado.reason
+                        : new Error('A resposta de eventos não é uma lista.')
+                );
+            }
+
             const idLogado =
                 ApiService.getIdUsuarioLogado();
 
             const ehProprioPerfil =
                 idLogado && idLogado == idUsuario;
 
-            const inicial =
-                usuario.nome
-                    ? usuario.nome.charAt(0).toUpperCase()
-                    : '?';
+            const nomeUsuario = usuario.nome || 'Usuário';
+            const inicial = nomeUsuario.charAt(0).toUpperCase();
+            const fotoUrl = ApiService.formatarUrlFotoPerfil(usuario.fotoPerfil);
+            const fotoUrlComCache = fotoUrl
+                ? `${fotoUrl}${fotoUrl.includes('?') ? '&' : '?'}v=${Date.now()}`
+                : '';
 
             const container =
                 document.getElementById('perfil-conteudo');
             const comunidadesUsuario =
-                (this.listaComunidades || [])
-                    .filter(comunidade =>
-                        (comunidade.membros || [])
-                            .some(membro =>
-                                (
-                                    membro.idUsuario ||
-                                    membro.id
-                                ) == idUsuario
-                            )
-                    );
-
-            const eventosUsuario =
-                (this.listaEventos || [])
-                    .filter(evento =>
-                        evento.criadorId == idUsuario
-                    );
+                this.obterComunidadesDoUsuario(idUsuario);
             if (!container) {
                 throw new Error(
                     'Container do perfil não encontrado'
                 );
             }
 
+            this.usuariosMap[idUsuario] = nomeUsuario;
+            this.usuariosFotosMap[idUsuario] = usuario.fotoPerfil;
+
+            const interessesPerfil = Array.isArray(usuario.interesses)
+                ? usuario.interesses.filter(interesse =>
+                    typeof interesse === 'string' && interesse.trim()
+                )
+                : [];
+            const interessesLogado = ApiService.getUsuarioLogado()?.interesses;
+            const interessesUsuario = Array.isArray(interessesLogado)
+                ? interessesLogado
+                : this.interessesSelecionados;
+            const interessesUsuarioNormalizados = new Set(
+                interessesUsuario.map(interesse =>
+                    String(interesse).trim().toLowerCase()
+                )
+            );
+            const interessesVisiveis = ehProprioPerfil
+                ? interessesPerfil
+                : idLogado
+                    ? interessesPerfil.filter(interesse =>
+                        interessesUsuarioNormalizados.has(
+                            interesse.trim().toLowerCase()
+                        )
+                    )
+                    : [];
+            const comunidadesContexto = ehProprioPerfil
+                ? comunidadesUsuario
+                : idLogado
+                    ? this.obterComunidadesEmComum(idUsuario)
+                    : [];
+            const interessesHtml = interessesVisiveis.length
+                ? `
+                    <div class="perfil-contexto-bloco">
+                        <span class="perfil-contexto-titulo">
+                            <i class="material-icons" aria-hidden="true">interests</i>
+                            ${ehProprioPerfil ? 'Seus interesses' : 'Interesses em comum'}
+                        </span>
+                        <div class="perfil-tags">
+                            ${interessesVisiveis.slice(0, 5).map(interesse => `
+                                <span class="perfil-tag">${this.escaparHtmlDestaque(interesse)}</span>
+                            `).join('')}
+                            ${interessesVisiveis.length > 5
+                        ? `<span class="perfil-tag perfil-tag-extra">+${interessesVisiveis.length - 5}</span>`
+                        : ''}
+                        </div>
+                    </div>
+                `
+                : '';
+            const comunidadesHtml = comunidadesContexto.length
+                ? `
+                    <div class="perfil-contexto-bloco">
+                        <span class="perfil-contexto-titulo">
+                            <i class="material-icons" aria-hidden="true">groups</i>
+                            ${ehProprioPerfil ? 'Suas comunidades' : 'Comunidades em comum'}
+                        </span>
+                        <div class="perfil-tags">
+                            ${comunidadesContexto.slice(0, 4).map(comunidade => `
+                                <span class="perfil-tag">${this.escaparHtmlDestaque(comunidade.nome || 'Comunidade')}</span>
+                            `).join('')}
+                            ${comunidadesContexto.length > 4
+                        ? `<span class="perfil-tag perfil-tag-extra">+${comunidadesContexto.length - 4}</span>`
+                        : ''}
+                        </div>
+                    </div>
+                `
+                : '';
+            const contextoSocialHtml = interessesHtml || comunidadesHtml
+                ? `<div class="perfil-contexto-social">${interessesHtml}${comunidadesHtml}</div>`
+                : idLogado && !ehProprioPerfil
+                    ? `
+                        <div class="perfil-contexto-vazio">
+                            <i class="material-icons" aria-hidden="true">diversity_3</i>
+                            Ainda não identificamos interesses ou comunidades em comum.
+                        </div>
+                    `
+                    : '';
+
             container.innerHTML = `
-    <div class="card perfil-hero">
-
-      <div class="perfil-header">
-
-    <div class="perfil-identidade">
-
-           ${(() => {
-                    const fotoUrl = ApiService.formatarUrlFotoPerfil(usuario.fotoPerfil);
-                    return fotoUrl
-                        ? `
-        <img
-            src="${fotoUrl}?v=${Date.now()}"
-            alt="Foto de perfil"
-            style="
-                width:72px;
-                height:72px;
-                border-radius:50%;
-                object-fit:cover;
-                flex-shrink:0;
-            "
-            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
-        >
-        <div class="avatar"
-             style="
-                display:none;
-                width:72px;
-                height:72px;
-                font-size:28px;
-             ">
-            ${inicial}
-        </div>
-      `
-                        : `
-        <div class="avatar"
-             style="
-                width:72px;
-                height:72px;
-                font-size:28px;
-             ">
-            ${inicial}
-        </div>
-      `;
-                })()
+                <section class="card perfil-hero">
+                    <div class="perfil-capa" aria-hidden="true"></div>
+                    <div class="perfil-hero-conteudo">
+                        <div class="perfil-header">
+                            <div class="perfil-identidade">
+                                <div class="perfil-avatar">
+                                    ${fotoUrlComCache
+                    ? `
+                                        <img src="${this.escaparHtmlDestaque(fotoUrlComCache)}"
+                                            alt="" onerror="this.hidden=true; this.nextElementSibling.hidden=false">
+                                        <span class="perfil-avatar-inicial" hidden>${this.escaparHtmlDestaque(inicial)}</span>
+                                    `
+                    : `<span class="perfil-avatar-inicial">${this.escaparHtmlDestaque(inicial)}</span>`
                 }
+                                </div>
+                                <div class="perfil-identidade-texto">
+                                    <h1>${this.escaparHtmlDestaque(nomeUsuario)}</h1>
+                                    <span class="perfil-username">@${this.escaparHtmlDestaque(usuario.username || 'usuario')}</span>
+                                </div>
+                            </div>
 
-          <div>
-    <h2 style="margin:0;">
-        ${usuario.nome}
-    </h2>
+                            <div class="perfil-header-acao">
+                                ${ehProprioPerfil ? `
+                                    <button type="button" class="btn-perfil-acao btn-perfil-editar"
+                                        onclick="app.abrirEdicaoPerfil()">
+                                        <i class="material-icons" aria-hidden="true">edit</i>
+                                        Editar perfil
+                                    </button>
+                                ` : idLogado ? `
+                                    <button type="button" class="btn-perfil-acao btn-perfil-mensagem"
+                                        onclick="app.iniciarConversa(${idUsuario})">
+                                        <i class="material-icons" aria-hidden="true">chat_bubble_outline</i>
+                                        Mensagem
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </div>
 
-    <p class="perfil-username"
-       style="
-           margin:4px 0 0 0;
-           color:var(--text-muted);
-       ">
-        @${usuario.username}
-    </p>
-</div>
+                        <section class="perfil-sobre" aria-label="Sobre">
+                            <h2>Sobre</h2>
+                            <p>${this.escaparHtmlDestaque(
+                    usuario.bio || 'Este usuário ainda não adicionou uma bio.'
+                )}</p>
+                        </section>
 
-</div> <!-- fecha perfil-identidade -->
+                        ${contextoSocialHtml}
 
-<div class="perfil-header-acao">
+                    </div>
+                </section>
 
-    ${ehProprioPerfil ? `
-        <button
-            type="button"
-            class="btn-perfil-acao btn-perfil-editar"
-            onclick="app.abrirEdicaoPerfil()"
-        >
-            <i class="material-icons">edit</i>
-            Editar perfil
-        </button>
-    ` : idLogado ? `
-        <button
-            type="button"
-            class="btn-perfil-acao btn-perfil-mensagem"
-            onclick="app.iniciarConversa(${idUsuario})"
-        >
-            <i class="material-icons">chat_bubble_outline</i>
-            Mensagem
-        </button>
-    ` : ''}
+                <div class="perfil-tabs">
+                    <div class="perfil-tab active" id="perfil-tab-publicacoes"
+                        onclick="app.mostrarAbaPerfil('publicacoes', ${idUsuario})">
+                        <span>Publicações</span>
+                        <strong>${totalPostsUsuario === null ? '—' : totalPostsUsuario}</strong>
+                    </div>
+                    <div class="perfil-tab" id="perfil-tab-comunidades"
+                        onclick="app.mostrarAbaPerfil('comunidades', ${idUsuario})">
+                        <span>Comunidades</span>
+                        <strong>${comunidadesUsuario.length}</strong>
+                    </div>
+                    <div class="perfil-tab" id="perfil-tab-eventos"
+                        onclick="app.mostrarAbaPerfil('eventos', ${idUsuario})">
+                        <span>Eventos</span>
+                        <strong>${eventosUsuario === null ? '—' : eventosUsuario.length}</strong>
+                    </div>
+                </div>
 
-</div>
-
-</div> <!-- fecha perfil-header -->
-
-</div>
-
-        <div style="
-            border-top:1px solid var(--border-color);
-            padding-top:20px;
-        ">
-
-            <h3 style="margin-top:0;">
-                Sobre
-            </h3>
-
-            <p style="
-                color:var(--text-muted);
-                line-height:1.6;
-                margin-bottom:0;
-            ">
-                ${usuario.bio ||
-                'Este usuário ainda não adicionou uma bio.'
-                }
-            </p>
-
-        </div>
-
-   
-    </div>
-<div class="perfil-tabs">
-
-    <div
-        class="perfil-tab active"
-        id="perfil-tab-publicacoes"
-        onclick="app.mostrarAbaPerfil('publicacoes', ${idUsuario})"
-    >
-        <span>Publicações</span>
-        <strong>${postsUsuario.length}</strong>
-    </div>
-
-    <div
-        class="perfil-tab"
-        id="perfil-tab-comunidades"
-        onclick="app.mostrarAbaPerfil('comunidades', ${idUsuario})"
-    >
-        <span>Comunidades</span>
-        <strong>${comunidadesUsuario.length}</strong>
-    </div>
-
-    <div
-        class="perfil-tab"
-        id="perfil-tab-eventos"
-        onclick="app.mostrarAbaPerfil('eventos', ${idUsuario})"
-    >
-        <span>Eventos</span>
-        <strong>${eventosUsuario.length}</strong>
-    </div>
-
-</div>
-
-    <div id="perfil-conteudo-abas"></div>
-`;
+                <div id="perfil-conteudo-abas"></div>
+            `;
 
             document.querySelectorAll('.view-section')
                 .forEach(el => el.classList.remove('active'));
@@ -6828,42 +6960,11 @@ ${ApiService.getIdUsuarioLogado() ? `
             return;
         }
 
-        container.innerHTML = '';
-
-        posts.forEach(post => {
-
-            const div = document.createElement('div');
-            div.className = 'card';
-
-            const nomeComunidade =
-                post.idComunidade
-                    ? this.comunidadesMap[post.idComunidade]
-                    : null;
-
-            div.innerHTML = `
-            <h3 style="margin-top:0;">
-                ${post.titulo}
-            </h3>
-
-            ${nomeComunidade
-                    ? `
-                        <small style="color:var(--text-muted);">
-                            Publicado em ${nomeComunidade}
-                        </small>
-                    `
-                    : ''
-                }
-
-            <p style="
-                margin-top:12px;
-                color:var(--text-muted);
-            ">
-                ${post.conteudo}
-            </p>
-        `;
-
-            container.appendChild(div);
-        });
+        this.montarCardsPosts(
+            posts,
+            'perfil-conteudo-abas',
+            false
+        );
     }
 
     renderizarComunidadesPerfil(comunidades, idUsuario) {
@@ -7290,13 +7391,29 @@ ${ApiService.getIdUsuarioLogado() ? `
 
         if (aba === 'comunidades') {
 
-            const comunidades =
+            const comunidadesMembro =
                 await ApiService.listarComunidadesPorUsuario(
                     idUsuario
                 );
+            const comunidadesCriadas =
+                (this.listaComunidades || [])
+                    .filter(comunidade =>
+                        String(
+                            comunidade.criador?.idUsuario ||
+                            comunidade.criador?.id
+                        ) === String(idUsuario)
+                    );
+            const comunidadesPorId = new Map();
+            [...comunidadesMembro, ...comunidadesCriadas]
+                .forEach(comunidade =>
+                    comunidadesPorId.set(
+                        String(comunidade.idComunidade || comunidade.id),
+                        comunidade
+                    )
+                );
 
             this.renderizarComunidadesPerfil(
-                comunidades,
+                [...comunidadesPorId.values()],
                 idUsuario
             );
 
@@ -7945,7 +8062,7 @@ ${ApiService.getIdUsuarioLogado() ? `
 
         select.innerHTML = `
         <option value="">
-            Nenhuma (Evento aberto / Global)
+            Selecione uma comunidade (opcional)
         </option>
     `;
 
