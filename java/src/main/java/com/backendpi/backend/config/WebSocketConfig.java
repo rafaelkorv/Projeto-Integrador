@@ -13,12 +13,15 @@ public class WebSocketConfig
         implements WebSocketConfigurer {
 
     private final ChatWebSocketHandler chatWebSocketHandler;
+    private final WebConfig webConfig;
 
     public WebSocketConfig(
-            ChatWebSocketHandler chatWebSocketHandler
+            ChatWebSocketHandler chatWebSocketHandler,
+            WebConfig webConfig
     ) {
         this.chatWebSocketHandler
                 = chatWebSocketHandler;
+        this.webConfig = webConfig;
     }
 
     @Override
@@ -31,9 +34,6 @@ public class WebSocketConfig
                         chatWebSocketHandler,
                         "/ws/chat"
                 )
-                .setAllowedOrigins(
-                        "http://127.0.0.1:5500",
-                        "http://localhost:5500"
-                );
+                .setAllowedOrigins(webConfig.getAllowedOrigins());
     }
 }

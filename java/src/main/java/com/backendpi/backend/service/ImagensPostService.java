@@ -1,29 +1,32 @@
 package com.backendpi.backend.service;
 
+import java.util.List;
+
 import com.backendpi.backend.model.ImagensPost;
 import com.backendpi.backend.repository.PostRepository;
 import com.backendpi.backend.repository.ImagensPostRepository;
 import com.backendpi.backend.security.AuthenticatedUserContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import java.util.List;
-import java.util.UUID;
 
 @Service
 public class ImagensPostService {
+    private static final Logger logger = LoggerFactory.getLogger(ImagensPostService.class);
     private final ImagensPostRepository repository;
     private final PostRepository postRepository;
+    private final CloudinaryImageStorageService imageStorage;
 
-    public ImagensPostService(ImagensPostRepository repository, PostRepository postRepository) {
+    public ImagensPostService(
+            ImagensPostRepository repository,
+            PostRepository postRepository,
+            CloudinaryImageStorageService imageStorage) {
         this.repository = repository;
         this.postRepository = postRepository;
+        this.imageStorage = imageStorage;
     }
 
     public List<ImagensPost> listar() { return repository.findAll(); }
@@ -40,45 +43,37 @@ public class ImagensPostService {
         ImagensPost imagem = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Imagem não encontrada."));
         validarPermissaoNoPost(imagem.getIdPost());
+        imageStorage.delete(imagem.getPublicId());
         repository.delete(imagem);
     }
 
-    public ImagensPost salvarUpload(Long idPost, MultipartFile imagem) throws IOException {
+    public void deletarPorPost(Long idPost) {
+        List<ImagensPost> imagens = listarPorPost(idPost);
+        for (ImagensPost imagem : imagens) {
+            imageStorage.delete(imagem.getPublicId());
+            repository.delete(imagem);
+        }
+    }
+
+    public ImagensPost salvarUpload(Long idPost, MultipartFile imagem) {
         validarPermissaoNoPost(idPost);
         if (repository.countByIdPost(idPost) >= 4) {
             throw new IllegalArgumentException("Cada publicação pode ter no máximo quatro imagens.");
         }
-        if (imagem == null || imagem.isEmpty()) {
-            throw new IllegalArgumentException("Selecione uma imagem.");
-        }
-        if (imagem.getSize() > 5 * 1024 * 1024) {
-            throw new IllegalArgumentException("Cada imagem deve ter no máximo 5 MB.");
-        }
-
-        String extensao = switch (imagem.getContentType() == null ? "" : imagem.getContentType()) {
-            case "image/jpeg" -> ".jpg";
-            case "image/png" -> ".png";
-            case "image/webp" -> ".webp";
-            default -> throw new IllegalArgumentException("Use uma imagem JPG, PNG ou WEBP.");
-        };
-
-        Path diretorio = Paths.get("uploads", "posts").toAbsolutePath().normalize();
-        Files.createDirectories(diretorio);
-        Path destino = diretorio.resolve(UUID.randomUUID() + extensao).normalize();
-        if (!destino.startsWith(diretorio)) {
-            throw new IllegalArgumentException("Nome de arquivo inválido.");
-        }
-
-        try (InputStream arquivo = imagem.getInputStream()) {
-            Files.copy(arquivo, destino);
-        }
+        CloudinaryImageStorageService.UploadedImage enviada =
+                imageStorage.upload(imagem, "projeto-integrador/posts");
         try {
             ImagensPost registro = new ImagensPost();
             registro.setIdPost(idPost);
-            registro.setUrl("uploads/posts/" + destino.getFileName());
+            registro.setUrl(enviada.secureUrl());
+            registro.setPublicId(enviada.publicId());
             return repository.save(registro);
         } catch (RuntimeException erro) {
-            Files.deleteIfExists(destino);
+            try {
+                imageStorage.delete(enviada.publicId());
+            } catch (RuntimeException erroLimpeza) {
+                logger.error("Não foi possível limpar imagem do Cloudinary após falha ao salvar no banco.", erroLimpeza);
+            }
             throw erro;
         }
     }

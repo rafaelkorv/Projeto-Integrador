@@ -87,6 +87,11 @@
             <artifactId>google-api-services-drive</artifactId>
             <version>v3-rev20260720-2.0.0</version>
         </dependency>
+        <dependency>
+            <groupId>com.cloudinary</groupId>
+            <artifactId>cloudinary-http5</artifactId>
+            <version>2.6.0</version>
+        </dependency>
     </dependencies>
 
     <build>

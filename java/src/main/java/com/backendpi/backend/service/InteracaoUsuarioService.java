@@ -17,7 +17,9 @@ public class InteracaoUsuarioService {
         this.repository = repository;
     }
 
-    public List<InteracaoUsuario> listar() { return repository.findAll(); }
+    public List<InteracaoUsuario> listar() {
+        return repository.findByIdUsuario(AuthenticatedUserContext.requireUserId());
+    }
     public InteracaoUsuario salvar(InteracaoUsuario interacao) {
         AuthenticatedUserContext.requireMatches(interacao.getIdUsuario());
         return repository.save(interacao);

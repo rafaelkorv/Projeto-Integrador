@@ -17,7 +17,9 @@ public class MembrosComunidadeService {
         this.repository = repository;
     }
 
-    public List<MembrosComunidade> listar() { return repository.findAll(); }
+    public List<MembrosComunidade> listar() {
+        return repository.findByIdUsuario(AuthenticatedUserContext.requireUserId());
+    }
     public MembrosComunidade salvar(MembrosComunidade membro) {
         AuthenticatedUserContext.requireMatches(membro.getIdUsuario());
         return repository.save(membro);

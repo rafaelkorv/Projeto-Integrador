@@ -6,7 +6,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ContentDisposition;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -21,7 +20,6 @@ import com.backendpi.backend.service.ParticipacaoEventoService;
 
 @RestController
 @RequestMapping("/api/eventos")
-@CrossOrigin(origins = "*")
 public class ParticipacaoEventoController {
 
     private final ParticipacaoEventoService service;

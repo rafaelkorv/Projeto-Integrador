@@ -3,7 +3,6 @@ package com.backendpi.backend.controller;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -15,7 +14,6 @@ import com.backendpi.backend.service.NotificacaoEventoService;
 
 @RestController
 @RequestMapping("/api/notificacoes")
-@CrossOrigin(origins = "*")
 public class NotificacaoEventoController {
 
     private final NotificacaoEventoService notificacaoService;

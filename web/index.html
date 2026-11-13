@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="api-base-url" content="">
     <title>Painel - Rede Social</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1830,6 +1831,7 @@
     <div
     class="modal-overlay"
     id="configuracoes-modal"
+    >
 
     <div class="modal configuracoes-modal">
 
@@ -1923,6 +1925,21 @@
 
             </button>
 
+            <button
+                type="button"
+                class="configuracoes-item"
+                onclick="app.abrirAlteracaoSenhaPelasConfiguracoes()"
+            >
+                <span class="configuracoes-item-icon">
+                    <i class="material-icons">lock_reset</i>
+                </span>
+                <span class="configuracoes-item-info">
+                    <strong>Alterar senha</strong>
+                    <small>Confirme sua senha atual para criar uma nova.</small>
+                </span>
+                <i class="material-icons">chevron_right</i>
+            </button>
+
         </div>
 
 
@@ -1933,14 +1950,85 @@
             </i>
 
             <span>
-                Alteração de senha poderá ser
-                adicionada futuramente.
+                As outras sessões serão encerradas após a alteração.
             </span>
 
         </div>
 
     </div>
 
+</div>
+
+<div
+    class="modal-overlay"
+    id="alterar-senha-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="alterar-senha-titulo"
+>
+    <div class="modal configuracoes-modal">
+        <button
+            type="button"
+            class="modal-close-btn"
+            onclick="app.fecharModal('alterar-senha-modal')"
+            aria-label="Fechar"
+        >
+            <i class="material-icons">close</i>
+        </button>
+
+        <div class="configuracoes-header">
+            <span class="section-kicker">Segurança da conta</span>
+            <h2 id="alterar-senha-titulo">Alterar senha</h2>
+            <p>Informe sua senha atual e escolha uma nova senha.</p>
+        </div>
+
+        <form onsubmit="event.preventDefault(); app.alterarSenha()">
+            <div class="auth-field">
+                <label for="senha-atual">Senha atual</label>
+                <div class="auth-input-wrap">
+                    <i class="material-icons" aria-hidden="true">lock_outline</i>
+                    <input id="senha-atual" type="password" autocomplete="current-password" required>
+                    <button type="button" class="password-toggle"
+                        onclick="app.alternarVisibilidadeSenha('senha-atual', this)"
+                        aria-label="Mostrar senha atual">
+                        <i class="material-icons">visibility</i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="auth-field">
+                <label for="senha-nova">Nova senha</label>
+                <div class="auth-input-wrap">
+                    <i class="material-icons" aria-hidden="true">lock_reset</i>
+                    <input id="senha-nova" type="password" autocomplete="new-password" required>
+                    <button type="button" class="password-toggle"
+                        onclick="app.alternarVisibilidadeSenha('senha-nova', this)"
+                        aria-label="Mostrar nova senha">
+                        <i class="material-icons">visibility</i>
+                    </button>
+                </div>
+                <small class="form-hint">Use pelo menos 8 caracteres, com até 72 bytes.</small>
+            </div>
+
+            <div class="auth-field">
+                <label for="senha-confirmacao">Confirmar nova senha</label>
+                <div class="auth-input-wrap">
+                    <i class="material-icons" aria-hidden="true">lock_reset</i>
+                    <input id="senha-confirmacao" type="password" autocomplete="new-password" required>
+                    <button type="button" class="password-toggle"
+                        onclick="app.alternarVisibilidadeSenha('senha-confirmacao', this)"
+                        aria-label="Mostrar confirmação da senha">
+                        <i class="material-icons">visibility</i>
+                    </button>
+                </div>
+            </div>
+
+            <div id="senha-feedback" class="auth-feedback" role="alert" aria-live="polite"></div>
+            <button type="submit" class="auth-submit" id="alterar-senha-submit">
+                Salvar nova senha
+            </button>
+        </form>
+    </div>
 </div>
 
     <!-- type="module" permite importar ApiService; servir esta página por HTTP evita bloqueios de módulos em file://. -->

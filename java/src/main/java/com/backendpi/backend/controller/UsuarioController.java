@@ -1,17 +1,19 @@
 package com.backendpi.backend.controller;
 
-import java.io.InputStream;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -20,35 +22,42 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
+import com.backendpi.backend.dto.AlterarSenhaRequest;
 import com.backendpi.backend.dto.UsuarioPerfilDTO;
 import com.backendpi.backend.model.Usuario;
 import com.backendpi.backend.repository.UsuarioRepository;
 import com.backendpi.backend.service.UsuarioService;
 import com.backendpi.backend.security.AuthSessionService;
 import com.backendpi.backend.security.AuthenticatedUserContext;
+import com.backendpi.backend.service.CloudinaryImageStorageService;
 
 @RestController
 @RequestMapping("/usuarios")
-@CrossOrigin("*")
 public class UsuarioController {
 
+    private static final Logger logger = LoggerFactory.getLogger(UsuarioController.class);
     private final UsuarioRepository usuarioRepository;
     private final UsuarioService usuarioService;
     private final AuthSessionService authSessionService;
+    private final CloudinaryImageStorageService imageStorage;
 
     public UsuarioController(
             UsuarioRepository usuarioRepository,
             UsuarioService usuarioService,
-            AuthSessionService authSessionService) {
+            AuthSessionService authSessionService,
+            CloudinaryImageStorageService imageStorage) {
 
         this.usuarioRepository = usuarioRepository;
         this.usuarioService = usuarioService;
         this.authSessionService = authSessionService;
+        this.imageStorage = imageStorage;
     }
 
     @GetMapping
     public List<UsuarioPerfilDTO> listar() {
+        AuthenticatedUserContext.requireUserId();
         return usuarioRepository.findAll().stream()
                 .map(this::criarPerfil)
                 .toList();
@@ -66,6 +75,11 @@ public class UsuarioController {
             @RequestBody Usuario usuario
     ) {
         AuthenticatedUserContext.requireMatches(id);
+        if (usuario.getSenha() != null && !usuario.getSenha().isEmpty()) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Use a opção de alteração de senha para atualizar sua senha.");
+        }
         return criarPerfil(usuarioService.atualizar(id, usuario));
     }
 
@@ -80,6 +94,7 @@ public class UsuarioController {
     public ResponseEntity<UsuarioPerfilDTO> buscarPorId(
             @PathVariable Long id) {
 
+        AuthenticatedUserContext.requireUserId();
         return usuarioRepository.findById(id)
                 .map(usuario -> {
 
@@ -149,6 +164,24 @@ public class UsuarioController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @PatchMapping("/me/senha")
+    public ResponseEntity<UsuarioPerfilDTO> alterarSenha(
+            @RequestBody AlterarSenhaRequest dados) {
+        if (dados == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Informe a senha atual e a nova senha.");
+        }
+        Long idUsuario = AuthenticatedUserContext.requireUserId();
+        Usuario atualizado = usuarioService.alterarSenha(
+                idUsuario,
+                dados.senhaAtual(),
+                dados.novaSenha());
+
+        authSessionService.encerrarSessoesDoUsuario(idUsuario);
+        UsuarioPerfilDTO perfil = criarPerfil(atualizado);
+        perfil.setAuthToken(authSessionService.criarSessao(idUsuario));
+        return ResponseEntity.ok(perfil);
+    }
+
     @PostMapping("/login")
     public ResponseEntity<UsuarioPerfilDTO> login(
             @RequestBody Map<String, String> dados) {
@@ -177,66 +210,61 @@ public class UsuarioController {
         if (usuario == null) {
             return ResponseEntity.notFound().build();
         }
-        if (foto.isEmpty()) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("success", false, "error", "Selecione uma imagem."));
-        }
-
-        String extensao = switch (foto.getContentType() == null ? "" : foto.getContentType()) {
-            case "image/jpeg" -> ".jpg";
-            case "image/png" -> ".png";
-            case "image/webp" -> ".webp";
-            default -> null;
-        };
-        if (extensao == null) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("success", false, "error", "Use uma imagem JPG, PNG ou WEBP."));
-        }
-        if (foto.getSize() > 5 * 1024 * 1024) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("success", false, "error", "A foto deve ter no máximo 5 MB."));
-        }
-
         try {
-            Path diretorio = Paths.get("uploads", "perfis").toAbsolutePath().normalize();
-            Files.createDirectories(diretorio);
-            Path destino = diretorio.resolve(UUID.randomUUID() + extensao).normalize();
-            if (!destino.startsWith(diretorio)) {
-                return ResponseEntity.badRequest()
-                        .body(Map.of("success", false, "error", "Nome de arquivo inválido."));
-            }
-
-            try (InputStream arquivo = foto.getInputStream()) {
-                Files.copy(arquivo, destino);
-            }
-
+            CloudinaryImageStorageService.UploadedImage enviada =
+                    imageStorage.upload(foto, "projeto-integrador/perfis");
             String caminhoAnterior = usuario.getFotoPerfil();
-            usuario.setFotoPerfil("uploads/perfis/" + destino.getFileName());
+            String publicIdAnterior = usuario.getFotoPerfilPublicId();
+            usuario.setFotoPerfil(enviada.secureUrl());
+            usuario.setFotoPerfilPublicId(enviada.publicId());
             Usuario salvo;
             try {
                 salvo = usuarioRepository.save(usuario);
             } catch (RuntimeException erroBanco) {
-                Files.deleteIfExists(destino);
+                try {
+                    imageStorage.delete(enviada.publicId());
+                } catch (RuntimeException erroLimpeza) {
+                    logger.error("Não foi possível limpar imagem do Cloudinary após falha ao salvar o perfil.", erroLimpeza);
+                }
                 throw erroBanco;
             }
 
-            if (caminhoAnterior != null && caminhoAnterior.startsWith("uploads/perfis/")) {
+            if (publicIdAnterior != null && !publicIdAnterior.isBlank()) {
                 try {
-                    Path fotoAnterior = diretorio.resolve(Paths.get(caminhoAnterior).getFileName()).normalize();
-                    if (fotoAnterior.startsWith(diretorio) && !fotoAnterior.equals(destino)) {
-                        Files.deleteIfExists(fotoAnterior);
-                    }
-                } catch (Exception erroLimpeza) {
-                    System.err.println("Não foi possível remover a foto de perfil anterior: "
-                            + erroLimpeza.getMessage());
+                    imageStorage.delete(publicIdAnterior);
+                } catch (RuntimeException erroLimpeza) {
+                    logger.warn("A nova foto foi salva, mas a foto anterior não pôde ser removida do Cloudinary.",
+                            erroLimpeza);
                 }
+            } else {
+                removerFotoLocalAntiga(caminhoAnterior);
             }
 
             return ResponseEntity.ok(criarPerfil(salvo));
+        } catch (IllegalArgumentException erro) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("success", false, "error", erro.getMessage()));
+        } catch (ResponseStatusException erro) {
+            throw erro;
         } catch (Exception erro) {
-            erro.printStackTrace();
+            logger.error("Não foi possível atualizar a foto de perfil.", erro);
             return ResponseEntity.internalServerError()
                     .body(Map.of("success", false, "error", "Não foi possível salvar a foto de perfil."));
+        }
+    }
+
+    private void removerFotoLocalAntiga(String caminhoAnterior) {
+        if (caminhoAnterior == null || !caminhoAnterior.startsWith("uploads/perfis/")) {
+            return;
+        }
+        try {
+            Path diretorio = Paths.get("uploads", "perfis").toAbsolutePath().normalize();
+            Path fotoAnterior = diretorio.resolve(Paths.get(caminhoAnterior).getFileName()).normalize();
+            if (fotoAnterior.startsWith(diretorio)) {
+                Files.deleteIfExists(fotoAnterior);
+            }
+        } catch (IOException erroLimpeza) {
+            logger.warn("Não foi possível remover a foto de perfil local anterior.", erroLimpeza);
         }
     }
 

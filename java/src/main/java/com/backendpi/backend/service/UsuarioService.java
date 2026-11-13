@@ -1,13 +1,17 @@
 package com.backendpi.backend.service;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.backendpi.backend.model.Usuario;
 import com.backendpi.backend.repository.UsuarioRepository;
+import com.backendpi.backend.security.AuthenticatedUserContext;
 
 @Service
 public class UsuarioService {
@@ -26,6 +30,7 @@ public class UsuarioService {
 
     public Usuario salvar(Usuario usuario) {
         usuario.setIdUsuario(null);
+        usuario.setFotoPerfil(null);
         if ((usuario.getEmail() == null
                 || usuario.getEmail().trim().isEmpty())
                 && (usuario.getTelefone() == null
@@ -76,21 +81,39 @@ public class UsuarioService {
                     if (dados.getEmail() != null) existente.setEmail(dados.getEmail());
                     if (dados.getTelefone() != null) existente.setTelefone(dados.getTelefone());
                     if (dados.getBio() != null) existente.setBio(dados.getBio());
-                    if (dados.getFotoPerfil() != null) existente.setFotoPerfil(dados.getFotoPerfil());
                     if (dados.getDataNascimento() != null) existente.setDataNascimento(dados.getDataNascimento());
                     if (dados.getInteresses() != null) existente.setInteresses(dados.getInteresses());
-
-                    if (dados.getSenha() != null && !dados.getSenha().trim().isEmpty()) {
-                        if (!isBcryptHash(dados.getSenha())) {
-                            existente.setSenha(passwordEncoder.encode(dados.getSenha()));
-                        } else {
-                            existente.setSenha(dados.getSenha());
-                        }
-                    }
 
                     return repository.save(existente);
                 })
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado com id: " + id));
+    }
+
+    public Usuario alterarSenha(Long id, String senhaAtual, String novaSenha) {
+        AuthenticatedUserContext.requireMatches(id);
+
+        if (senhaAtual == null || senhaAtual.isEmpty()
+                || novaSenha == null || novaSenha.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Preencha a senha atual e a nova senha.");
+        }
+        if (novaSenha.length() < 8) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A nova senha precisa ter pelo menos 8 caracteres.");
+        }
+        if (novaSenha.getBytes(StandardCharsets.UTF_8).length > 72) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A nova senha pode ter no máximo 72 bytes.");
+        }
+
+        Usuario usuario = repository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuário não encontrado."));
+        if (usuario.getSenha() == null || !passwordEncoder.matches(senhaAtual, usuario.getSenha())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A senha atual não confere.");
+        }
+        if (passwordEncoder.matches(novaSenha, usuario.getSenha())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A nova senha deve ser diferente da senha atual.");
+        }
+
+        usuario.setSenha(passwordEncoder.encode(novaSenha));
+        return repository.save(usuario);
     }
 
     public void deletar(Long id) {

@@ -8,7 +8,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.UUID;
 
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,7 +25,6 @@ import com.backendpi.backend.service.ComunidadeService;
 
 @RestController
 @RequestMapping("/comunidades")
-@CrossOrigin(origins = "*") // Muito importante para não dar erro de conexão com o JS!
 public class ComunidadeController {
 
     private final ComunidadeService service;

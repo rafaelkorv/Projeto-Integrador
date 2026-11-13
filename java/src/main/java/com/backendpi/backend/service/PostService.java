@@ -21,15 +21,18 @@ public class PostService {
     private final PostRepository repository;
     private final ComentarioRepository comentarioRepository;
     private final ComunidadeRepository comunidadeRepository;
+    private final ImagensPostService imagensPostService;
 
     public PostService(
             PostRepository repository,
             ComentarioRepository comentarioRepository,
-            ComunidadeRepository comunidadeRepository) {
+            ComunidadeRepository comunidadeRepository,
+            ImagensPostService imagensPostService) {
 
         this.repository = repository;
         this.comentarioRepository = comentarioRepository;
         this.comunidadeRepository = comunidadeRepository;
+        this.imagensPostService = imagensPostService;
     }
 
     public List<Post> listar() {
@@ -103,6 +106,7 @@ public class PostService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Usuário sem permissão para excluir este post");
         }
 
+        imagensPostService.deletarPorPost(idPost);
         comentarioRepository.deleteAll(
                 comentarioRepository.findByIdPost(idPost)
         );

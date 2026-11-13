@@ -47,7 +47,7 @@ class _SocialSearchPageState extends State<SocialSearchPage> {
   Future<void> _carregar() async {
     if (mounted) setState(() { _carregando = true; _erro = null; });
     try {
-      // As duas consultas começam juntas, mas apenas dados públicos são lidos.
+      // As duas consultas começam juntas e usam os dados permitidos à sessão autenticada.
       final resultado = await Future.wait<Object>([
         PostService().listarPosts().then<Object>((valor) => valor),
         UsuarioService().listarUsuarios().then<Object>((valor) => valor),

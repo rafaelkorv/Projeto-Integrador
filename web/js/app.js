@@ -36,6 +36,9 @@ class AppController {
         this.tamanhoPaginaEventos = 12;
         this.interessesSelecionados = [];
         this.usuariosSeguidos = new Set();
+        this.usuariosSeguirEmAtualizacao = new Set();
+        this.erroCarregarUsuariosSeguidos = false;
+        this.mensagemErroUsuariosSeguidos = '';
         this.filtrosEventos = {
             texto: null,
             categoria: null,
@@ -80,7 +83,12 @@ class AppController {
             if (evento.key === 'Escape') {
                 document.querySelector('.account-menu')?.classList.remove('open');
                 document.querySelectorAll('.modal-overlay').forEach(modal => {
-                    if (modal.style.display === 'flex') modal.style.display = 'none';
+                    if (modal.style.display === 'flex') {
+                        modal.style.display = 'none';
+                        if (modal.id === 'alterar-senha-modal') {
+                            this.limparFormularioAlteracaoSenha();
+                        }
+                    }
                 });
             }
         });
@@ -520,9 +528,12 @@ class AppController {
         if (user) {
             const inicial = (user.nome || 'U').charAt(0).toUpperCase();
             const fotoUrl = ApiService.formatarUrlFotoPerfil(user.fotoPerfil);
+            const fotoUrlComCache = fotoUrl
+                ? `${fotoUrl}?v=${Date.now()}`
+                : null;
             const avatarHtml = fotoUrl
-                ? `<img src="${fotoUrl}?v=${Date.now()}" class="account-avatar" style="object-fit:cover; border-radius:50%; width:28px; height:28px;" onerror="this.outerHTML='<span class=\\'account-avatar\\'>${inicial}</span>'">`
-                : `<span class="account-avatar">${inicial}</span>`;
+                ? `<img src="${this.escaparHtmlDestaque(fotoUrlComCache)}" class="account-avatar" style="object-fit:cover; border-radius:50%; width:28px; height:28px;" onerror="this.remove()">`
+                : `<span class="account-avatar">${this.escaparHtmlDestaque(inicial)}</span>`;
 
             container.innerHTML = `
     <div class="account-menu">
@@ -935,6 +946,9 @@ class AppController {
 
     fecharModal(id) {
         document.getElementById(id).style.display = 'none';
+        if (id === 'alterar-senha-modal') {
+            this.limparFormularioAlteracaoSenha();
+        }
         if (id === 'post-modal') {
             const inputImagens = document.getElementById('post-imagens');
             if (inputImagens) inputImagens.value = '';
@@ -1363,6 +1377,7 @@ class AppController {
                 porPost[idPost].push(imagem);
                 return porPost;
             }, {});
+            await this.carregarUsuariosSeguidos();
             this.renderizarSugestoesPessoas();
 
             // Carrega os primeiros posts sob demanda (primeira página)
@@ -1531,15 +1546,95 @@ class AppController {
         `).join('');
     }
 
-    alternarSeguirUsuario(idUsuario) {
-        const id = Number(idUsuario);
-        if (this.usuariosSeguidos.has(id)) {
-            this.usuariosSeguidos.delete(id);
-        } else {
-            this.usuariosSeguidos.add(id);
+    async carregarUsuariosSeguidos() {
+        if (!ApiService.getIdUsuarioLogado()) {
+            this.usuariosSeguidos.clear();
+            this.erroCarregarUsuariosSeguidos = false;
+            this.mensagemErroUsuariosSeguidos = '';
+            return;
         }
 
+        try {
+            const idsSeguidos = await ApiService.listarUsuariosSeguidos();
+            if (!Array.isArray(idsSeguidos)) {
+                throw new Error('A resposta de pessoas seguidas não é uma lista.');
+            }
+            this.usuariosSeguidos = new Set(idsSeguidos.map(Number));
+            this.erroCarregarUsuariosSeguidos = false;
+            this.mensagemErroUsuariosSeguidos = '';
+        } catch (erro) {
+            console.error('Não foi possível carregar as pessoas seguidas:', erro);
+            this.erroCarregarUsuariosSeguidos = true;
+            this.mensagemErroUsuariosSeguidos = erro.message
+                || 'Não foi possível carregar as pessoas que você segue.';
+        }
+    }
+
+    async alternarSeguirUsuario(idUsuario) {
+        const id = Number(idUsuario);
+        if (!Number.isSafeInteger(id) || id <= 0) return;
+        if (!ApiService.getIdUsuarioLogado()) {
+            this.abrirModal('auth-modal');
+            this.mostrarAuthFeedback('Entre na sua conta para seguir pessoas.');
+            return;
+        }
+        if (this.usuariosSeguirEmAtualizacao.has(id)) return;
+
+        const deixarDeSeguir = this.usuariosSeguidos.has(id);
+        this.usuariosSeguirEmAtualizacao.add(id);
         this.renderizarSugestoesPessoas();
+        this.atualizarBotoesSeguirUsuario(id);
+
+        try {
+            const resposta = deixarDeSeguir
+                ? await ApiService.deixarDeSeguirUsuario(id)
+                : await ApiService.seguirUsuario(id);
+            if (!resposta.ok) {
+                throw new Error(await this.mensagemErroApi(
+                    resposta,
+                    deixarDeSeguir
+                        ? 'Não foi possível deixar de seguir esta pessoa.'
+                        : 'Não foi possível seguir esta pessoa.'
+                ));
+            }
+
+            if (deixarDeSeguir) {
+                this.usuariosSeguidos.delete(id);
+            } else {
+                this.usuariosSeguidos.add(id);
+            }
+            this.erroCarregarUsuariosSeguidos = false;
+            this.mensagemErroUsuariosSeguidos = '';
+            this.mostrarFeedbackGlobal(
+                deixarDeSeguir ? 'Você deixou de seguir esta pessoa.' : 'Você começou a seguir esta pessoa.'
+            );
+        } catch (erro) {
+            console.error('Erro ao atualizar pessoa seguida:', erro);
+            this.mostrarFeedbackGlobal(erro.message || 'Não foi possível atualizar as pessoas seguidas.');
+        } finally {
+            this.usuariosSeguirEmAtualizacao.delete(id);
+            this.renderizarSugestoesPessoas();
+            this.atualizarBotoesSeguirUsuario(id);
+        }
+    }
+
+    atualizarBotoesSeguirUsuario(idUsuario) {
+        const seguindo = this.usuariosSeguidos.has(idUsuario);
+        const atualizando = this.usuariosSeguirEmAtualizacao.has(idUsuario);
+        document.querySelectorAll(`[data-follow-user-id="${idUsuario}"]`).forEach(botao => {
+            botao.disabled = atualizando;
+            botao.setAttribute('aria-busy', String(atualizando));
+            botao.setAttribute('aria-pressed', String(seguindo));
+            botao.classList.toggle('seguindo', seguindo);
+            if (botao.classList.contains('btn-perfil-seguir')) {
+                botao.innerHTML = `
+                    <i class="material-icons" aria-hidden="true">${seguindo ? 'check' : 'person_add'}</i>
+                    ${seguindo ? 'Seguindo' : 'Seguir'}
+                `;
+            } else {
+                botao.textContent = atualizando ? 'Atualizando...' : seguindo ? 'Seguindo' : 'Seguir';
+            }
+        });
     }
 
     renderizarSugestoesPessoas() {
@@ -1550,10 +1645,21 @@ class AppController {
         const usuarioAtualId = usuarioLogado ? (usuarioLogado.idUsuario || usuarioLogado.id) : null;
         const interesses = this.getInteressesSelecionados();
 
+        if (usuarioLogado && this.erroCarregarUsuariosSeguidos) {
+            container.innerHTML = `
+                <p class="feed-sidebar-empty">${this.escaparHtmlDestaque(this.mensagemErroUsuariosSeguidos)}</p>
+                <button class="btn-ghost" type="button"
+                    onclick="app.carregarUsuariosSeguidos().then(() => app.renderizarSugestoesPessoas())">
+                    Tentar novamente
+                </button>
+            `;
+            return;
+        }
+
         const candidatos = this.listaUsuariosCompleta
             .filter(usuario => {
                 const id = usuario.idUsuario || usuario.id;
-                if (!id || id === usuarioAtualId) return false;
+                if (!id || Number(id) === Number(usuarioAtualId)) return false;
 
                 const comunidades = this.listaComunidades.filter(comunidade =>
                     (comunidade.membros || []).some(membro => (membro.idUsuario || membro.id) == id)
@@ -1610,6 +1716,7 @@ class AppController {
         container.innerHTML = candidatos.map(({ usuario }) => {
             const id = usuario.idUsuario || usuario.id;
             const seguindo = this.usuariosSeguidos.has(Number(id));
+            const atualizando = this.usuariosSeguirEmAtualizacao.has(Number(id));
             return `
                 <div class="feed-pessoa-item">
                     <div class="feed-pessoa-item-top">
@@ -1620,7 +1727,14 @@ class AppController {
                         </div>
                     </div>
                     <p>${this.escaparHtmlDestaque((usuario.bio || 'Interessado em viver experiências incríveis.').slice(0, 72))}</p>
-                    <button class="feed-pessoa-btn ${seguindo ? 'seguindo' : ''}" onclick="app.alternarSeguirUsuario(${id})" type="button">${seguindo ? 'Seguindo' : 'Seguir'}</button>
+                    <button class="feed-pessoa-btn ${seguindo ? 'seguindo' : ''}"
+                        data-follow-user-id="${Number(id)}"
+                        aria-pressed="${seguindo}"
+                        aria-busy="${atualizando}"
+                        onclick="app.alternarSeguirUsuario(${Number(id)})"
+                        type="button" ${atualizando ? 'disabled' : ''}>
+                        ${atualizando ? 'Atualizando...' : !usuarioLogado ? 'Entrar para seguir' : seguindo ? 'Seguindo' : 'Seguir'}
+                    </button>
                 </div>
             `;
         }).join('');
@@ -2565,16 +2679,13 @@ class AppController {
                 urlFoto
                     ? `
                             <img
-                                src="${urlFoto}"
+                                src="${this.escaparHtmlDestaque(urlFoto)}"
                                 class="
                                     avatar
                                     comunidade-membro-avatar
                                 "
                                 alt=""
-                                onerror="
-                                    this.outerHTML =
-                                    '<div class=\\'avatar comunidade-membro-avatar\\'>${inicial}</div>'
-                                "
+                                onerror="this.remove()"
                             >
                         `
                     : `
@@ -3260,8 +3371,8 @@ class AppController {
             let inicial = (nomeAutor || 'U').charAt(0).toUpperCase();
 
             let avatarHtml = urlFotoAutor
-                ? `<img src="${urlFotoAutor}" class="avatar" style="object-fit:cover;" onerror="this.outerHTML='<div class=\\'avatar\\'>${inicial}</div>'">`
-                : `<div class="avatar">${inicial}</div>`;
+                ? `<img src="${this.escaparHtmlDestaque(urlFotoAutor)}" class="avatar" style="object-fit:cover;" onerror="this.remove()">`
+                : `<div class="avatar">${this.escaparHtmlDestaque(inicial)}</div>`;
 
             let nomeComunidade = this.comunidadesMap[idComunidade];
             let dataPostagem = post.dataPostagem
@@ -3442,8 +3553,8 @@ ${ApiService.getIdUsuarioLogado() ? `
         const inicialAutor = (nomeAutor || 'U').charAt(0).toUpperCase();
 
         const avatarHeaderHtml = urlFotoAutor
-            ? `<img src="${urlFotoAutor}" class="avatar" style="object-fit:cover;" onerror="this.outerHTML='<div class=\\'avatar\\'>${inicialAutor}</div>'">`
-            : `<div class="avatar">${inicialAutor}</div>`;
+            ? `<img src="${this.escaparHtmlDestaque(urlFotoAutor)}" class="avatar" style="object-fit:cover;" onerror="this.remove()">`
+            : `<div class="avatar">${this.escaparHtmlDestaque(inicialAutor)}</div>`;
 
         const idComunidade = post.idComunidade || post.id_comunidade;
         const nomeComunidade = this.comunidadesMap[idComunidade];
@@ -3563,8 +3674,8 @@ ${ApiService.getIdUsuarioLogado() ? `
                 const urlFotoC = ApiService.formatarUrlFotoPerfil(fotoC);
                 const iniC = (nomeC || 'U').charAt(0).toUpperCase();
                 const avC = urlFotoC
-                    ? `<img src="${urlFotoC}" class="avatar detail-comment-avatar" style="object-fit:cover;" onerror="this.outerHTML='<div class=\\'avatar detail-comment-avatar\\'>${iniC}</div>'">`
-                    : `<div class="avatar detail-comment-avatar">${iniC}</div>`;
+                    ? `<img src="${this.escaparHtmlDestaque(urlFotoC)}" class="avatar detail-comment-avatar" style="object-fit:cover;" onerror="this.remove()">`
+                    : `<div class="avatar detail-comment-avatar">${this.escaparHtmlDestaque(iniC)}</div>`;
                 return `<div class="detail-comment">${avC}<div><strong>${this.escaparHtmlDestaque(nomeC)}</strong><p>${this.escaparHtmlDestaque(c.conteudo)}</p></div></div>`;
             }).join('') : '<p class="comments-empty">Ainda não há comentários. Seja o primeiro a participar.</p>'}</div>
                 </section>
@@ -3923,13 +4034,10 @@ ${ApiService.getIdUsuarioLogado() ? `
                 urlFoto
                     ? `
                     <img
-                        src="${urlFoto}"
+                        src="${this.escaparHtmlDestaque(urlFoto)}"
                         class="avatar pessoa-avatar"
                         alt=""
-                        onerror="
-                            this.outerHTML =
-                            '<div class=\\'avatar pessoa-avatar\\'>${inicial}</div>'
-                        "
+                        onerror="this.remove()"
                     >
                 `
                     : `
@@ -6715,8 +6823,16 @@ ${ApiService.getIdUsuarioLogado() ? `
                                         Editar perfil
                                     </button>
                                 ` : idLogado ? `
+                                    <button type="button"
+                                        class="btn-perfil-acao btn-perfil-seguir ${this.usuariosSeguidos.has(Number(idUsuario)) ? 'seguindo' : ''}"
+                                        data-follow-user-id="${Number(idUsuario)}"
+                                        aria-pressed="${this.usuariosSeguidos.has(Number(idUsuario))}"
+                                        onclick="app.alternarSeguirUsuario(${Number(idUsuario)})">
+                                        <i class="material-icons" aria-hidden="true">${this.usuariosSeguidos.has(Number(idUsuario)) ? 'check' : 'person_add'}</i>
+                                        ${this.usuariosSeguidos.has(Number(idUsuario)) ? 'Seguindo' : 'Seguir'}
+                                    </button>
                                     <button type="button" class="btn-perfil-acao btn-perfil-mensagem"
-                                        onclick="app.iniciarConversa(${idUsuario})">
+                                        onclick="app.iniciarConversa(${Number(idUsuario)})">
                                         <i class="material-icons" aria-hidden="true">chat_bubble_outline</i>
                                         Mensagem
                                     </button>
@@ -8745,6 +8861,98 @@ ${ApiService.getIdUsuarioLogado() ? `
         this.abrirModal(
             'configuracoes-modal'
         );
+    }
+
+    abrirAlteracaoSenhaPelasConfiguracoes() {
+        this.fecharModal('configuracoes-modal');
+        this.limparFormularioAlteracaoSenha();
+        this.abrirModal('alterar-senha-modal');
+        setTimeout(() => document.getElementById('senha-atual')?.focus(), 0);
+    }
+
+    limparFormularioAlteracaoSenha() {
+        [
+            ['senha-atual', 'Mostrar senha atual'],
+            ['senha-nova', 'Mostrar nova senha'],
+            ['senha-confirmacao', 'Mostrar confirmação da senha']
+        ].forEach(([id, ariaLabel]) => {
+            const input = document.getElementById(id);
+            if (!input) return;
+            input.value = '';
+            input.type = 'password';
+            const botao = input.closest('.auth-input-wrap')?.querySelector('.password-toggle');
+            if (botao) {
+                botao.setAttribute('aria-label', ariaLabel);
+                botao.querySelector('.material-icons').innerText = 'visibility';
+            }
+        });
+        this.mostrarSenhaFeedback('');
+    }
+
+    mostrarSenhaFeedback(mensagem) {
+        const feedback = document.getElementById('senha-feedback');
+        if (!feedback) return;
+        feedback.textContent = mensagem;
+        feedback.classList.toggle('visible', Boolean(mensagem));
+    }
+
+    async alterarSenha() {
+        const senhaAtual = document.getElementById('senha-atual')?.value || '';
+        const senhaNova = document.getElementById('senha-nova')?.value || '';
+        const confirmacao = document.getElementById('senha-confirmacao')?.value || '';
+        const botao = document.getElementById('alterar-senha-submit');
+
+        this.mostrarSenhaFeedback('');
+        if (!senhaAtual || !senhaNova || !confirmacao) {
+            this.mostrarSenhaFeedback('Preencha os três campos para continuar.');
+            return;
+        }
+        if (senhaNova.length < 8) {
+            this.mostrarSenhaFeedback('A nova senha precisa ter pelo menos 8 caracteres.');
+            return;
+        }
+        if (new TextEncoder().encode(senhaNova).length > 72) {
+            this.mostrarSenhaFeedback('A nova senha pode ter no máximo 72 bytes.');
+            return;
+        }
+        if (senhaNova !== confirmacao) {
+            this.mostrarSenhaFeedback('A confirmação não corresponde à nova senha.');
+            return;
+        }
+
+        if (botao) {
+            botao.disabled = true;
+            botao.textContent = 'Salvando...';
+        }
+
+        try {
+            const resposta = await ApiService.alterarSenha(senhaAtual, senhaNova);
+            if (!resposta.ok) {
+                throw new Error(await this.mensagemErroApi(
+                    resposta,
+                    'Não foi possível alterar a senha.'
+                ));
+            }
+
+            const usuarioAtualizado = await resposta.json();
+            if (!usuarioAtualizado?.authToken) {
+                this.fecharModal('alterar-senha-modal');
+                this.fazerLogout();
+                this.mostrarFeedbackGlobal('Senha alterada. Entre novamente para continuar.');
+                return;
+            }
+            ApiService.salvarSessao(usuarioAtualizado);
+            this.fecharModal('alterar-senha-modal');
+            this.mostrarFeedbackGlobal('Senha alterada. As outras sessões foram encerradas.');
+        } catch (erro) {
+            console.error('Erro ao alterar senha:', erro);
+            this.mostrarSenhaFeedback(erro.message || 'Não foi possível alterar a senha.');
+        } finally {
+            if (botao) {
+                botao.disabled = false;
+                botao.textContent = 'Salvar nova senha';
+            }
+        }
     }
 
     abrirEdicaoPerfilPelasConfiguracoes() {

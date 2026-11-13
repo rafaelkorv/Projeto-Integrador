@@ -1,10 +1,24 @@
 // api_service.js
 // Camada de comunicação do frontend: concentra URLs, sessão e conversões HTTP para separar rede da lógica de tela.
 export class ApiService {
-    // Em desenvolvimento, a interface roda em outra porta e consome a API Spring Boot nesta origem.
-    static API_URL = 'http://localhost:8080';
-    //static API_URL = 'https://projeto-integrador-m4jn.onrender.com';
-    //static API_URL = 'http://143.106.241.xx:8080';
+    static API_URL = (() => {
+        const configurada = document
+            .querySelector('meta[name="api-base-url"]')
+            ?.content.trim();
+        const hostsLocais = ['localhost', '127.0.0.1'];
+        const hostDaPagina = window.location.hostname.toLowerCase();
+        const apiPadrao = hostsLocais.includes(hostDaPagina)
+            ? 'http://localhost:8080'
+            : 'https://projeto-integrador-m4jn.onrender.com';
+        const api = new URL(configurada || apiPadrao, window.location.href);
+        const destinoLocal = hostsLocais.includes(api.hostname.toLowerCase());
+
+        if (api.protocol !== 'https:' && !(api.protocol === 'http:' && destinoLocal)) {
+            throw new Error('A API deve usar HTTPS, exceto em desenvolvimento local.');
+        }
+
+        return api.origin;
+    })();
     static STORAGE_KEY = 'usuarioLogado';
 
     static getStorage(tipo = 'session') {
@@ -120,21 +134,76 @@ export class ApiService {
         if (typeof fotoPerfil !== 'string') return null;
         const foto = fotoPerfil.trim();
         if (!foto) return null;
-        if (foto.startsWith('http://') || foto.startsWith('https://') || foto.startsWith('data:')) {
-            return foto;
+
+        if (/^https:\/\//i.test(foto)) {
+            try {
+                const url = new URL(foto);
+                return url.protocol === 'https:' ? url.href : null;
+            } catch {
+                return null;
+            }
         }
+
+        if (/^http:\/\//i.test(foto)) {
+            try {
+                const url = new URL(foto);
+                return ['localhost', '127.0.0.1'].includes(url.hostname.toLowerCase())
+                    ? url.href
+                    : null;
+            } catch {
+                return null;
+            }
+        }
+
         if (foto.startsWith('uploads/')) {
-            return `${this.API_URL}/${foto}`;
+            if (!/^uploads\/(perfis|eventos)\/[A-Za-z0-9_-]+\.(jpg|jpeg|png|webp)$/i.test(foto)) {
+                return null;
+            }
+            const url = new URL(foto, `${this.API_URL}/`);
+            return url.origin === new URL(this.API_URL).origin
+                && url.pathname.startsWith('/uploads/')
+                ? url.href
+                : null;
         }
-        if (foto.startsWith('/google/drive/image/') || foto.startsWith('google/drive/image/')) {
-            return `${this.API_URL}/${foto.replace(/^\//, '')}`;
+
+        const caminhoGoogle = foto.match(/^\/?google\/drive\/image\/([A-Za-z0-9_-]+)$/);
+        const idArquivo = caminhoGoogle
+            ? caminhoGoogle[1]
+            : /^[A-Za-z0-9_-]+$/.test(foto)
+                ? foto
+                : null;
+        if (idArquivo) {
+            return `${this.API_URL}/google/drive/image/${encodeURIComponent(idArquivo)}`;
         }
-        // Identificador de arquivo do Google Drive
-        return `${this.API_URL}/google/drive/image/${foto}`;
+
+        return null;
     }
 
     // --- USUÁRIOS ---
     static async listarUsuarios() { return await (await fetch(`${this.API_URL}/usuarios`)).json(); }
+    static async listarUsuariosSeguidos() {
+        const resposta = await fetch(`${this.API_URL}/usuarios/me/seguindo`);
+        if (!resposta.ok) {
+            throw new Error(await this.mensagemErroResposta(
+                resposta,
+                'Não foi possível carregar as pessoas que você segue.'
+            ));
+        }
+        return resposta.json();
+    }
+    static async seguirUsuario(idUsuario) {
+        return fetch(`${this.API_URL}/usuarios/me/seguindo/${idUsuario}`, { method: 'PUT' });
+    }
+    static async deixarDeSeguirUsuario(idUsuario) {
+        return fetch(`${this.API_URL}/usuarios/me/seguindo/${idUsuario}`, { method: 'DELETE' });
+    }
+    static async alterarSenha(senhaAtual, novaSenha) {
+        return fetch(`${this.API_URL}/usuarios/me/senha`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ senhaAtual, novaSenha })
+        });
+    }
     static async criarUsuario(
         nomeCompleto,
         nome,
@@ -389,13 +458,16 @@ export class ApiService {
     static async mensagemErroResposta(resposta, mensagemPadrao) {
         const corpo = await resposta.text();
         if (/unknown column|doesn't exist|does not exist|no such table/i.test(corpo)) {
-            return 'O banco ainda não tem as alterações de eventos. Aplique as migrações pendentes em java/database/migrations e reinicie o backend.';
+            return 'O banco ainda não tem todas as alterações necessárias. Aplique as migrações pendentes em java/database/migrations e reinicie o backend.';
         }
 
         try {
             const erro = JSON.parse(corpo);
             if (typeof erro.message === 'string' && erro.message.trim()) {
                 return erro.message;
+            }
+            if (typeof erro.detail === 'string' && erro.detail.trim()) {
+                return erro.detail;
             }
         } catch {
             if (corpo.trim()) return corpo.trim();
